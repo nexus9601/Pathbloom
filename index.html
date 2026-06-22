@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pathbloom — Map Your Journey. Bloom Your Story.</title>
+  <meta name="description" content="Pathbloom is the world's most beautiful travel journaling platform. Map your journeys, share your stories, and discover new paths across the globe." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+
+  <style>
+    /* ══════════════════════════════════════════
+       RESET & DESIGN TOKENS
+    ══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0d1c18;
+      --bg2:          #091510;
+      --surface:      rgba(255,255,255,0.035);
+      --surface2:     rgba(255,255,255,0.06);
+      --border:       rgba(93,202,165,0.14);
+      --border2:      rgba(93,202,165,0.28);
+      --green:        #3dcfa0;
+      --green2:       #5dcaa5;
+      --green3:       #2ab88a;
+      --green-dim:    rgba(61,207,160,0.10);
+      --green-glow:   rgba(61,207,160,0.25);
+      --orange:       #D85A30;
+      --orange-dim:   rgba(216,90,48,0.12);
+      --text:         #e1f0ea;
+      --text-dim:     #7aaa96;
+      --text-mute:    #3d6457;
+      --nav-h:        68px;
+      --radius:       16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ══════════════════════════════════════════
+       AMBIENT BACKGROUND
+    ══════════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 5%,  rgba(61,207,160,0.07) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 60% at 85% 85%, rgba(93,202,165,0.05) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(216,90,48,0.03) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       FLOATING PARTICLES
+    ══════════════════════════════════════════ */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--green);
+      opacity: 0;
+      animation: float-up linear infinite;
+    }
+
+    @keyframes float-up {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 0.25; }
+      90%  { opacity: 0.08; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ══════════════════════════════════════════
+       NAVIGATION BAR
+    ══════════════════════════════════════════ */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      transition: background 0.35s ease, box-shadow 0.35s ease, height 0.35s ease;
+    }
+
+    .nav.scrolled {
+      height: 58px;
+      background: rgba(9, 21, 16, 0.85);
+      backdrop-filter: blur(20px) saturate(1.5);
+      box-shadow: 0 1px 0 var(--border), 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .nav-inner {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    /* Logo */
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .nav-logo img {
+      height: 36px;
+      width: auto;
+      filter: brightness(1.2) drop-shadow(0 0 8px rgba(61,207,160,0.25));
+      transition: filter 0.2s;
+    }
+
+    .nav-logo:hover img {
+      filter: brightness(1.4) drop-shadow(0 0 14px rgba(61,207,160,0.45));
+    }
+
+    /* Nav links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-radius: 50px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-links a i { font-size: 15px; }
+
+    .nav-links a:hover {
+      color: var(--text);
+      background: var(--green-dim);
+    }
+
+    .nav-links a.active {
+      color: var(--green);
+      background: var(--green-dim);
+    }
+
+    /* Nav right actions */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-nav-ghost {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .btn-nav-ghost:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--green-dim);
+    }
+
+    .btn-nav-cta {
+      padding: 8px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      color: #062b20;
+      background: linear-gradient(135deg, #2db88a 0%, #3dcfa0 60%, #4dd8ab 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 2px 12px rgba(61,207,160,0.28);
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn-nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(61,207,160,0.40);
+    }
+
+    .btn-nav-cta:active { transform: translateY(0) scale(0.97); }
+
+    /* Hamburger (mobile) */
+    .nav-hamburger {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 10px;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* Mobile drawer */
+    .nav-drawer {
+      display: none;
+      position: fixed;
+      top: var(--nav-h);
+      left: 0; right: 0;
+      background: rgba(9, 21, 16, 0.97);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      flex-direction: column;
+      padding: 20px 24px;
+      gap: 6px;
+      z-index: 99;
+      transform: translateY(-12px);
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .nav-drawer.open {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .nav-drawer a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-radius: 12px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-drawer a:hover { color: var(--text); background: var(--green-dim); }
+
+    /* ══════════════════════════════════════════
+       HERO SECTION
+    ══════════════════════════════════════════ */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: calc(var(--nav-h) + 48px);
+      overflow: hidden;
+    }
+
+    /* Headline */
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 860px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px 5px 10px;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--green2);
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fade-up 0.7s 0.2s ease forwards;
+    }
+
+    .hero-eyebrow .pulse-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(40px, 7vw, 80px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fade-up 0.8s 0.35s ease forwards;
+    }
+
+    .hero-title .line-green {
+      background: linear-gradient(90deg, #3dcfa0, #5dcaa5, #4ae8b4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-title .line-orange {
+      background: linear-gradient(90deg, #e8845a, #D85A30);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 560px;
+      margin: 0 auto 32px;
+      opacity: 0;
+      animation: fade-up 0.8s 0.5s ease forwards;
+    }
+
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fade-up 0.8s 0.65s ease forwards;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 30px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      color: #062b20;
+      background: linear-gradient(135deg, #2db88a 0%, #3dcfa0 60%, #4dd8ab 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(61,207,160,0.30);
+      transition: transform 0.15s, box-shadow 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(61,207,160,0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0) scale(0.97); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dim);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--green-dim);
+      transform: translateY(-1px);
+    }
+
+    /* ── Globe wrapper ── */
+    .globe-wrapper {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      margin: 40px auto 0;
+      opacity: 0;
+      animation: fade-in-globe 1.2s 0.9s ease forwards;
+    }
+
+    @keyframes fade-in-globe {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #globe-container {
+      width: 100%;
+      aspect-ratio: 1 / 0.7;
+      border-radius: 24px;
+      overflow: hidden;
+      background: transparent;
+      cursor: grab;
+    }
+
+    #globe-container:active { cursor: grabbing; }
+
+    /* Floating stat badges around the globe */
+    .globe-stats {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .globe-stat {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(9, 21, 16, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 16px;
+      backdrop-filter: blur(14px);
+      pointer-events: none;
+      opacity: 0;
+      animation: stat-float 0.7s ease forwards;
+    }
+
+    .globe-stat:nth-child(1) { top: 12%;  left: 2%;  animation-delay: 1.4s; }
+    .globe-stat:nth-child(2) { top: 55%;  left: 1%;  animation-delay: 1.6s; }
+    .globe-stat:nth-child(3) { top: 12%;  right: 2%; animation-delay: 1.5s; }
+    .globe-stat:nth-child(4) { top: 62%;  right: 1%; animation-delay: 1.7s; }
+
+    @keyframes stat-float {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .globe-stat .stat-icon {
+      font-size: 20px;
+      color: var(--green);
+      line-height: 1;
+    }
+
+    .globe-stat .stat-num {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .globe-stat .stat-lbl {
+      font-size: 10px;
+      color: var(--text-mute);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+
+    /* Globe controls hint */
+    .globe-hint {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-mute);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+      animation: fade-up 0.6s 2.1s ease forwards;
+    }
+
+    .globe-hint span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ── Scroll chevron ── */
+    .scroll-cue {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 5;
+      opacity: 0;
+      animation: fade-up 0.6s 2.4s ease forwards;
+    }
+
+    .scroll-cue span {
+      font-size: 10px;
+      color: var(--text-mute);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .scroll-cue i {
+      font-size: 18px;
+      color: var(--text-mute);
+      animation: bounce-down 1.8s ease-in-out infinite;
+    }
+
+    @keyframes bounce-down {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(6px); }
+    }
+
+    /* ── Shared animations ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .nav-links, .btn-nav-ghost { display: none; }
+      .nav-hamburger { display: block; }
+      .nav { padding: 0 20px; }
+      .hero-content { padding: 0 16px; }
+      .hero-title { letter-spacing: -1px; }
+      .globe-stat:nth-child(2),
+      .globe-stat:nth-child(4) { display: none; }
+      .globe-stat:nth-child(1) { top: 8%; left: 4%; }
+      .globe-stat:nth-child(3) { top: 8%; right: 4%; }
+    }
+
+    @media (max-width: 480px) {
+      .globe-wrapper { margin-top: 28px; }
+      .hero { padding-top: calc(var(--nav-h) + 32px); }
+      .hero-ctas { gap: 10px; }
+      .btn-primary, .btn-secondary { padding: 12px 22px; font-size: 14px; }
+      .globe-stat { padding: 8px 12px; }
+      .globe-stat .stat-num { font-size: 15px; }
+    }
+
+    /* ══════════════════════════════════════════
+       FEATURES / HOW IT WORKS
+    ══════════════════════════════════════════ */
+    .features {
+      position: relative;
+      z-index: 1;
+      padding: 120px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Section header shared style */
+    .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 16px;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green2);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .section-title .accent-green {
+      background: linear-gradient(90deg, #3dcfa0, #4ae8b4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-sub {
+      font-size: 17px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    /* Feature cards grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 64px;
+    }
+
+    .feat-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 32px 32px;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      opacity: 0;
+      transform: translateY(32px);
+    }
+
+    .feat-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .feat-card:nth-child(2) { transition-delay: 0.12s; }
+    .feat-card:nth-child(3) { transition-delay: 0.24s; }
+
+    .feat-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(93,202,165,0.1);
+    }
+
+    /* Card corner glow */
+    .feat-card::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--card-glow, rgba(61,207,160,0.10)) 0%, transparent 70%);
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .feat-card:hover::before { opacity: 1.5; }
+
+    .feat-card.orange-accent { --card-glow: rgba(216,90,48,0.10); }
+    .feat-card.blue-accent   { --card-glow: rgba(100,170,255,0.10); }
+
+    /* Step number badge */
+    .feat-step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0;
+      margin-bottom: 20px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .feat-card.orange-accent .feat-step {
+      background: var(--orange-dim);
+      border-color: rgba(216,90,48,0.25);
+      color: var(--orange);
+    }
+
+    /* Icon */
+    .feat-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 18px;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .feat-card:hover .feat-icon-wrap {
+      background: rgba(61,207,160,0.18);
+      box-shadow: 0 0 24px rgba(61,207,160,0.20);
+    }
+
+    .feat-icon-wrap i {
+      font-size: 26px;
+      color: var(--green);
+    }
+
+    .feat-card.orange-accent .feat-icon-wrap {
+      background: var(--orange-dim);
+      border-color: rgba(216,90,48,0.2);
+    }
+
+    .feat-card.orange-accent .feat-icon-wrap i { color: var(--orange); }
+    .feat-card.orange-accent:hover .feat-icon-wrap {
+      background: rgba(216,90,48,0.20);
+      box-shadow: 0 0 24px rgba(216,90,48,0.20);
+    }
+
+    .feat-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      letter-spacing: -0.4px;
+    }
+
+    .feat-desc {
+      font-size: 14.5px;
+      color: var(--text-dim);
+      line-height: 1.75;
+    }
+
+    /* Feature bullet list inside card */
+    .feat-bullets {
+      list-style: none;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .feat-bullets li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13.5px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .feat-bullets li i {
+      font-size: 15px;
+      color: var(--green);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .feat-card.orange-accent .feat-bullets li i { color: var(--orange); }
+
+    /* Process flow strip */
+    .process-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 40px;
+      flex-wrap: wrap;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s 0.3s ease, transform 0.6s 0.3s ease;
+    }
+
+    .process-strip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .process-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+    }
+
+    .process-step .ps-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--green-dim);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .process-step .ps-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .process-arrow {
+      color: var(--text-mute);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Responsive features */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr; gap: 16px; }
+      .features { padding: 80px 16px; }
+      .process-strip { padding: 20px 16px; }
+      .process-step .ps-label { font-size: 12px; }
+    }
+
+    @media (max-width: 600px) {
+      .process-strip { flex-direction: column; align-items: flex-start; }
+      .process-arrow { transform: rotate(90deg); margin-left: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Particles ── -->
+  <div id="particles" aria-hidden="true"></div>
+
+  <!-- ════════════════════════════════════════
+       NAVIGATION
+  ════════════════════════════════════════ -->
+  <nav class="nav" id="main-nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+
+      <!-- Logo -->
+      <a href="/" class="nav-logo" aria-label="Pathbloom home">
+        <img src="logo.svg" alt="Pathbloom" />
+      </a>
+
+      <!-- Desktop links -->
+      <ul class="nav-links" role="list">
+        <li><a href="#globe" class="active"><i class="ti ti-world" aria-hidden="true"></i> Explore</a></li>
+        <li><a href="#features"><i class="ti ti-users" aria-hidden="true"></i> Community</a></li>
+        <li><a href="#destinations"><i class="ti ti-route" aria-hidden="true"></i> Routes</a></li>
+        <li><a href="#pricing"><i class="ti ti-sparkles" aria-hidden="true"></i> Pricing</a></li>
+      </ul>
+
+      <!-- Actions -->
+      <div class="nav-actions">
+        <button class="btn-nav-ghost" onclick="window.location.href='pathbloom_login_page.html'">Sign In</button>
+        <button class="btn-nav-cta" onclick="window.location.href='pathbloom_login_page.html'">
+          Start for free <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+        <button class="nav-hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
+          <i class="ti ti-menu-2" id="hamburger-icon"></i>
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- Mobile drawer -->
+  <div class="nav-drawer" id="nav-drawer" aria-hidden="true">
+    <a href="#globe" onclick="closeDrawer()"><i class="ti ti-world"></i> Explore</a>
+    <a href="#features" onclick="closeDrawer()"><i class="ti ti-users"></i> Community</a>
+    <a href="#destinations" onclick="closeDrawer()"><i class="ti ti-route"></i> Routes</a>
+    <a href="#pricing" onclick="closeDrawer()"><i class="ti ti-sparkles"></i> Pricing</a>
+    <a href="pathbloom_login_page.html"><i class="ti ti-login"></i> Sign In</a>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       HERO SECTION
+  ════════════════════════════════════════ -->
+  <section class="hero" id="hero" aria-labelledby="hero-heading">
+
+    <!-- Text content -->
+    <div class="hero-content">
+      <div class="hero-eyebrow" aria-label="143 explorers online now">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        143 explorers online now
+      </div>
+
+      <h1 class="hero-title" id="hero-heading">
+        <span class="line-green">The World</span><br/>
+        is Your<br/>
+        <span class="line-orange">Canvas.</span>
+      </h1>
+
+      <p class="hero-sub">
+        Map every journey. Bloom every story. Join millions of travellers who turn their adventures into living, shareable maps the world can explore.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="pathbloom_login_page.html" class="btn-primary" id="hero-cta-main">
+          <i class="ti ti-map-pin" aria-hidden="true"></i>
+          Start Mapping Free
+        </a>
+        <a href="#features" class="btn-secondary" id="hero-cta-secondary">
+          <i class="ti ti-play" aria-hidden="true"></i>
+          See How It Works
+        </a>
+      </div>
+    </div>
+
+    <!-- Interactive Globe -->
+    <div class="globe-wrapper" id="globe">
+      <div id="globe-container" role="img" aria-label="Interactive globe showing destinations"></div>
+
+      <!-- Floating stat badges -->
+      <div class="globe-stats" aria-hidden="true">
+        <div class="globe-stat">
+          <i class="ti ti-map stat-icon"></i>
+          <div>
+            <div class="stat-num">4.2M+</div>
+            <div class="stat-lbl">Journeys mapped</div>
+          </div>
+        </div>
+        <div class="globe-stat">
+          <i class="ti ti-users stat-icon"></i>
+          <div>
+            <div class="stat-num">890K</div>
+            <div class="stat-lbl">Travellers</div>
+          </div>
+        </div>
+        <div class="globe-stat">
+          <i class="ti ti-world stat-icon"></i>
+          <div>
+            <div class="stat-num">189</div>
+            <div class="stat-lbl">Countries bloomed</div>
+          </div>
+        </div>
+        <div class="globe-stat">
+          <i class="ti ti-star stat-icon"></i>
+          <div>
+            <div class="stat-num">4.9 ★</div>
+            <div class="stat-lbl">Avg. rating</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll hint -->
+      <div class="globe-hint" aria-hidden="true">
+        <span><i class="ti ti-drag-drop"></i> Drag to rotate</span>
+        <span><i class="ti ti-zoom-in"></i> Scroll to zoom</span>
+        <span><i class="ti ti-map-pin"></i> Click a pin to explore</span>
+      </div>
+    </div>
+
+    <!-- Scroll cue -->
+    <div class="scroll-cue" aria-hidden="true">
+      <span>Scroll</span>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════════════════
+       FEATURES / HOW IT WORKS
+  ════════════════════════════════════════ -->
+  <section class="features" id="features" aria-labelledby="features-heading">
+
+    <div class="section-header">
+      <div class="section-eyebrow"><i class="ti ti-sparkles"></i> How It Works</div>
+      <h2 class="section-title" id="features-heading">
+        Your journey,<br/><span class="accent-green">beautifully mapped.</span>
+      </h2>
+      <p class="section-sub">
+        Three powerful tools work together so you can capture, share, and relive every adventure without friction.
+      </p>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="features-grid" role="list">
+
+      <!-- Card 1: Map Your Journey -->
+      <article class="feat-card" role="listitem" id="feat-map">
+        <div class="feat-step" aria-label="Step 1">01</div>
+        <div class="feat-icon-wrap" aria-hidden="true">
+          <i class="ti ti-map-2"></i>
+        </div>
+        <h3 class="feat-title">Map Your Journey</h3>
+        <p class="feat-desc">
+          Drop pins on every destination you've visited. Draw routes, add waypoints, and build a living, interactive travel map that's uniquely yours.
+        </p>
+        <ul class="feat-bullets" aria-label="Map features">
+          <li><i class="ti ti-check" aria-hidden="true"></i> Drag-and-drop pin placement on 3D globe</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Custom route colours &amp; styles</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Offline map caching for remote travel</li>
+        </ul>
+      </article>
+
+      <!-- Card 2: Bloom Your Story (orange accent) -->
+      <article class="feat-card orange-accent" role="listitem" id="feat-story">
+        <div class="feat-step" aria-label="Step 2">02</div>
+        <div class="feat-icon-wrap" aria-hidden="true">
+          <i class="ti ti-notebook"></i>
+        </div>
+        <h3 class="feat-title">Bloom Your Story</h3>
+        <p class="feat-desc">
+          Attach journals, photos, and voice notes to every pin. Write rich travel diaries that come alive with media, weather snapshots, and moments.
+        </p>
+        <ul class="feat-bullets" aria-label="Story features">
+          <li><i class="ti ti-check" aria-hidden="true"></i> Rich-text journals with photo galleries</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Auto-tagged weather &amp; location details</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Voice memos &amp; audio travel diaries</li>
+        </ul>
+      </article>
+
+      <!-- Card 3: Discover New Paths -->
+      <article class="feat-card" role="listitem" id="feat-discover">
+        <div class="feat-step" aria-label="Step 3">03</div>
+        <div class="feat-icon-wrap" aria-hidden="true">
+          <i class="ti ti-compass"></i>
+        </div>
+        <h3 class="feat-title">Discover New Paths</h3>
+        <p class="feat-desc">
+          Explore the community map — millions of routes shared by real travellers. Filter by destination, style, or budget and find your next bloom.
+        </p>
+        <ul class="feat-bullets" aria-label="Discovery features">
+          <li><i class="ti ti-check" aria-hidden="true"></i> Community-curated route library</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Filter by budget, duration &amp; vibe</li>
+          <li><i class="ti ti-check" aria-hidden="true"></i> Follow travellers &amp; collect inspiration</li>
+        </ul>
+      </article>
+
+    </div>
+
+    <!-- Process strip -->
+    <div class="process-strip" id="process-strip" aria-label="The Pathbloom process">
+      <div class="process-step">
+        <span class="ps-num" aria-hidden="true">1</span>
+        <span class="ps-label">Sign up free</span>
+      </div>
+      <i class="ti ti-chevron-right process-arrow" aria-hidden="true"></i>
+      <div class="process-step">
+        <span class="ps-num" aria-hidden="true">2</span>
+        <span class="ps-label">Drop your first pin</span>
+      </div>
+      <i class="ti ti-chevron-right process-arrow" aria-hidden="true"></i>
+      <div class="process-step">
+        <span class="ps-num" aria-hidden="true">3</span>
+        <span class="ps-label">Write your story</span>
+      </div>
+      <i class="ti ti-chevron-right process-arrow" aria-hidden="true"></i>
+      <div class="process-step">
+        <span class="ps-num" aria-hidden="true">4</span>
+        <span class="ps-label">Share &amp; inspire</span>
+      </div>
+      <i class="ti ti-chevron-right process-arrow" aria-hidden="true"></i>
+      <div class="process-step">
+        <span class="ps-num" aria-hidden="true">5</span>
+        <span class="ps-label">Discover new paths</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════════════════
+       SCRIPTS
+  ════════════════════════════════════════ -->
+
+  <!-- Three.js + Globe.gl -->
+  <script src="https://unpkg.com/three@0.150.1/build/three.min.js"></script>
+  <script src="https://unpkg.com/globe.gl@2.27.0/dist/globe.gl.min.js"></script>
+
+  <script>
+    /* ── Floating particles ── */
+    (function() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 28; i++) {
+        const p = document.createElement('span');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        p.style.cssText = `
+          width:${size}px; height:${size}px;
+          left:${Math.random() * 100}%;
+          animation-duration:${Math.random() * 14 + 10}s;
+          animation-delay:${Math.random() * 14}s;
+        `;
+        container.appendChild(p);
+      }
+    })();
+
+    /* ── Nav scroll shrink ── */
+    const nav = document.getElementById('main-nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    /* ── Mobile hamburger ── */
+    const hamburger = document.getElementById('hamburger-btn');
+    const drawer    = document.getElementById('nav-drawer');
+    const hIcon     = document.getElementById('hamburger-icon');
+    let drawerOpen  = false;
+
+    hamburger.addEventListener('click', () => {
+      drawerOpen = !drawerOpen;
+      hamburger.setAttribute('aria-expanded', drawerOpen);
+      drawer.setAttribute('aria-hidden', !drawerOpen);
+      drawer.classList.toggle('open', drawerOpen);
+      hIcon.className = drawerOpen ? 'ti ti-x' : 'ti ti-menu-2';
+    });
+
+    function closeDrawer() {
+      drawerOpen = false;
+      hamburger.setAttribute('aria-expanded', false);
+      drawer.setAttribute('aria-hidden', true);
+      drawer.classList.remove('open');
+      hIcon.className = 'ti ti-menu-2';
+    }
+
+    /* ── Interactive Globe (globe.gl) ── */
+    (function initGlobe() {
+      const el = document.getElementById('globe-container');
+
+      // ── Destination pins (lat, lng, label, type)
+      const destinations = [
+        { lat: 35.6762, lng: 139.6503, label: 'Tokyo',       color: '#3dcfa0', size: 1.0 },
+        { lat: 48.8566, lng:   2.3522, label: 'Paris',       color: '#3dcfa0', size: 0.9 },
+        { lat: 40.7128, lng: -74.0060, label: 'New York',    color: '#3dcfa0', size: 0.9 },
+        { lat: -33.868, lng: 151.2093, label: 'Sydney',      color: '#5dcaa5', size: 0.8 },
+        { lat: -8.4095, lng: 115.1889, label: 'Bali',        color: '#5dcaa5', size: 0.85 },
+        { lat: 38.7169, lng:  -9.1399, label: 'Lisbon',      color: '#5dcaa5', size: 0.75 },
+        { lat: 27.1751, lng:  78.0421, label: 'Agra',        color: '#D85A30', size: 0.7 },
+        { lat: -13.163, lng: -72.5451, label: 'Machu Picchu',color: '#D85A30', size: 0.7 },
+        { lat: 41.0082, lng:  28.9784, label: 'Istanbul',    color: '#5dcaa5', size: 0.75 },
+        { lat: 25.1972, lng:  55.2744, label: 'Dubai',       color: '#3dcfa0', size: 0.8 },
+        { lat: -1.9403, lng:  29.8739, label: 'Rwanda',      color: '#3dcfa0', size: 0.65 },
+        { lat: 64.9631, lng: -19.0208, label: 'Iceland',     color: '#4ae8b4', size: 0.7 },
+        { lat: 36.2048, lng: 138.2529, label: 'Kyoto',       color: '#5dcaa5', size: 0.8 },
+        { lat: -22.908, lng: -43.1729, label: 'Rio',         color: '#D85A30', size: 0.75 },
+        { lat: 51.5074, lng:  -0.1278, label: 'London',      color: '#3dcfa0', size: 0.85 },
+        { lat: 55.7558, lng:  37.6173, label: 'Moscow',      color: '#5dcaa5', size: 0.7 },
+        { lat: 19.4326, lng: -99.1332, label: 'Mexico City', color: '#D85A30', size: 0.75 },
+        { lat: -34.603, lng: -58.3816, label: 'Buenos Aires',color: '#5dcaa5', size: 0.7 },
+      ];
+
+      // ── Travel arcs between popular routes
+      const arcs = [
+        { startLat: 35.6762, startLng: 139.6503, endLat: -8.4095, endLng: 115.1889 }, // Tokyo → Bali
+        { startLat: -8.4095, startLng: 115.1889, endLat: 38.7169, endLng:  -9.1399 }, // Bali → Lisbon
+        { startLat: 48.8566, startLng:   2.3522, endLat: 40.7128, endLng: -74.0060 }, // Paris → New York
+        { startLat: 40.7128, startLng: -74.0060, endLat: -22.908, endLng: -43.1729 }, // NYC → Rio
+        { startLat: 51.5074, startLng:  -0.1278, endLat: 25.1972, endLng:  55.2744 }, // London → Dubai
+        { startLat: 25.1972, startLng:  55.2744, endLat: 27.1751, endLng:  78.0421 }, // Dubai → Agra
+        { startLat: 64.9631, startLng: -19.0208, endLat: 48.8566, endLng:   2.3522 }, // Iceland → Paris
+        { startLat: -33.868, startLng: 151.2093, endLat: 36.2048, endLng: 138.2529 }, // Sydney → Kyoto
+        { startLat: -13.163, startLng: -72.5451, endLat: 40.7128, endLng: -74.0060 }, // Machu Picchu → NYC
+        { startLat: 41.0082, startLng:  28.9784, endLat: 48.8566, endLng:   2.3522 }, // Istanbul → Paris
+      ];
+
+      // Create the globe
+      const globe = Globe({ animateIn: false })(el)
+        // ── Appearance
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+        .bumpImageUrl(null)
+        .backgroundImageUrl(null)
+        .backgroundColor('rgba(0,0,0,0)')
+
+        // ── Points (destination pins)
+        .pointsData(destinations)
+        .pointLat('lat')
+        .pointLng('lng')
+        .pointColor('color')
+        .pointRadius(d => d.size * 0.45)
+        .pointAltitude(0.015)
+        .pointLabel(d => `
+          <div style="
+            background:rgba(9,21,16,0.90);
+            border:1px solid rgba(93,202,165,0.25);
+            border-radius:10px;
+            padding:8px 14px;
+            font-family:Inter,sans-serif;
+            color:#e1f0ea;
+            font-size:13px;
+            font-weight:500;
+            backdrop-filter:blur(12px);
+            box-shadow:0 4px 16px rgba(0,0,0,0.5);
+          ">
+            <span style="color:${d.color}">●</span> ${d.label}
+          </div>
+        `)
+
+        // ── Arcs (travel routes)
+        .arcsData(arcs)
+        .arcStartLat('startLat')
+        .arcStartLng('startLng')
+        .arcEndLat('endLat')
+        .arcEndLng('endLng')
+        .arcColor(() => ['rgba(61,207,160,0.0)', 'rgba(61,207,160,0.65)', 'rgba(61,207,160,0.0)'])
+        .arcDashLength(0.4)
+        .arcDashGap(0.15)
+        .arcDashAnimateTime(2200)
+        .arcStroke(0.4)
+        .arcAltitude(0.2)
+
+        // ── Atmosphere
+        .atmosphereColor('#3dcfa0')
+        .atmosphereAltitude(0.18)
+
+        // ── Camera controls
+        .enablePointerInteraction(true);
+
+      // Set initial camera position (slightly tilted, centred)
+      globe.pointOfView({ lat: 15, lng: 10, altitude: 2.2 });
+
+      // Auto-rotate gently
+      let autoRotate = true;
+      let rotateRAF;
+
+      function doAutoRotate() {
+        if (!autoRotate) return;
+        globe.pointOfView(pov => ({
+          lat: pov.lat,
+          lng: pov.lng + 0.12,
+          altitude: pov.altitude
+        }));
+        rotateRAF = requestAnimationFrame(doAutoRotate);
+      }
+
+      doAutoRotate();
+
+      // Pause auto-rotate on user interaction, resume after 4s idle
+      let resumeTimer;
+      el.addEventListener('pointerdown', () => {
+        autoRotate = false;
+        cancelAnimationFrame(rotateRAF);
+        clearTimeout(resumeTimer);
+      });
+
+      el.addEventListener('pointerup', () => {
+        clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(() => {
+          autoRotate = true;
+          doAutoRotate();
+        }, 4000);
+      });
+
+      // Responsive resize
+      const resizeObs = new ResizeObserver(() => {
+        globe.width(el.offsetWidth).height(el.offsetHeight);
+      });
+      resizeObs.observe(el);
+
+      // Apply globe renderer tweaks for transparency
+      setTimeout(() => {
+        const renderer = globe.renderer();
+        if (renderer) {
+          renderer.setClearColor(0x000000, 0);
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+      }, 100);
+
+    })();
+
+    /* ── Scroll-reveal: feature cards + process strip ── */
+    (function() {
+      const cards   = document.querySelectorAll('.feat-card');
+      const strip   = document.getElementById('process-strip');
+      const targets = [...cards, strip];
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+
+      targets.forEach(t => observer.observe(t));
+    })();
+  </script>
+
+</body>
+</html>
