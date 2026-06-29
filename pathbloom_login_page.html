@@ -850,9 +850,11 @@
       setTimeout(() => {
         btn.classList.remove('btn-loading');
         btn.disabled = false;
-        showToast('✈️ Welcome back! Redirecting to your journey…', 3500);
+        showToast('✈️ Welcome back! Opening your dashboard…', 1200);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1200);
       }, 1800);
     });
+
 
     /* ── Forgot password ── */
     document.getElementById('forgot-btn').addEventListener('click', () => {
