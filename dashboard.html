@@ -3,14 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pathbloom — Dashboard</title>
+  <title>Pathbloom &mdash; Dashboard</title>
   <meta name="description" content="Your personal travel dashboard. Map new trips, view highlights, and connect with your group on Pathbloom." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script>
+    /*
+    ====================================================================
+    PATHBLOOM — GOOGLE MAPS CONFIGURATION
+    ====================================================================
+    1. Get a key at https://console.cloud.google.com
+       Enable: Maps JavaScript API + Places API
+    2. Replace YOUR_GOOGLE_MAPS_API_KEY in the <script async> tag below.
+    3. For regional boundary highlighting, create a Map ID:
+       Cloud Console > Map Management > Create Map ID
+       Enable feature layers: COUNTRY, ADMINISTRATIVE_AREA_LEVEL_1,
+       ADMINISTRATIVE_AREA_LEVEL_2. Replace YOUR_MAP_ID below.
+    ====================================================================
+    */
+    const MAP_ID = 'YOUR_MAP_ID';
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -20,8 +35,9 @@
       --green: #3dcfa0; --green2: #5dcaa5; --green3: #2ab88a;
       --green-dim: rgba(61,207,160,0.10); --green-glow: rgba(61,207,160,0.25);
       --orange: #D85A30; --orange-dim: rgba(216,90,48,0.12);
+      --blue: #7ba8ff; --blue-dim: rgba(100,150,255,0.12); --blue-border: rgba(100,150,255,0.20);
       --text: #e1f0ea; --text-dim: #7aaa96; --text-mute: #3d6457;
-      --sidebar-w: 280px; --topbar-h: 64px;
+      --sidebar-w: 280px; --topbar-h: 64px; --ease: .2s ease;
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; }
     .app-shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; grid-template-rows: var(--topbar-h) 1fr; height: 100vh; }
@@ -31,25 +47,34 @@
     .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; margin-right: 8px; }
     .topbar-logo img { height: 32px; width: auto; filter: brightness(1.2) drop-shadow(0 0 8px rgba(61,207,160,0.3)); }
     .topbar-search { flex: 1; max-width: 420px; position: relative; }
-    .topbar-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-mute); font-size: 16px; pointer-events: none; }
-    .topbar-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 50px; padding: 9px 16px 9px 40px; font-size: 13.5px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color .2s,background .2s; }
+    .topbar-search i.ti { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-mute); font-size: 16px; pointer-events: none; z-index: 1; }
+    .topbar-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 50px; padding: 9px 16px 9px 40px; font-size: 13.5px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color var(--ease),background var(--ease); }
     .topbar-search input::placeholder { color: var(--text-mute); }
     .topbar-search input:focus { border-color: var(--border2); background: var(--surface2); }
     .topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-    .topbar-icon-btn { position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text-dim); font-size: 17px; cursor: pointer; transition: background .2s,color .2s,border-color .2s; }
+    .topbar-icon-btn { position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text-dim); font-size: 17px; cursor: pointer; transition: background var(--ease),color var(--ease),border-color var(--ease); }
     .topbar-icon-btn:hover { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
     .badge { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--orange); border-radius: 50%; border: 1.5px solid var(--bg2); }
-    .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg,#2ab88a,#3dcfa0,#4ae8b4); border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 14px; color: #062b20; cursor: pointer; transition: box-shadow .2s; flex-shrink: 0; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg,#2ab88a,#3dcfa0,#4ae8b4); border: 2px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 14px; color: #062b20; cursor: pointer; transition: box-shadow var(--ease); flex-shrink: 0; }
     .avatar:hover { box-shadow: 0 0 0 3px var(--green-glow); }
+
+    /* GOOGLE MAPS PLACES AUTOCOMPLETE */
+    .pac-container { background: rgba(9,21,16,.97) !important; border: 1px solid var(--border2) !important; border-radius: 16px !important; overflow: hidden; margin-top: 6px; box-shadow: 0 16px 48px rgba(0,0,0,.6) !important; backdrop-filter: blur(20px); font-family: 'Inter',sans-serif !important; padding: 4px 0; z-index: 9999 !important; }
+    .pac-item { color: var(--text) !important; font-family: 'Inter',sans-serif !important; font-size: 13px !important; padding: 10px 16px !important; border-bottom: 1px solid var(--border) !important; cursor: pointer !important; }
+    .pac-item:last-child { border-bottom: none !important; }
+    .pac-item:hover, .pac-item-selected { background: var(--green-dim) !important; }
+    .pac-item-query { color: var(--text) !important; font-size: 13px !important; }
+    .pac-matched { color: var(--green) !important; font-weight: 600; }
+    .pac-icon { filter: invert(0.7) sepia(1) saturate(2) hue-rotate(100deg) brightness(1.2); width: 15px; height: 20px; }
+    .hdpi.pac-logo::after, .pac-logo::after { display: none !important; }
 
     /* SIDEBAR */
     .sidebar { background: rgba(9,21,16,0.88); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; overflow-y: auto; z-index: 40; }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     .sidebar-label { font-size: 10px; font-weight: 700; color: var(--text-mute); letter-spacing: 1.8px; text-transform: uppercase; padding: 0 20px; margin-bottom: 8px; margin-top: 20px; }
-    .sidebar-label:first-child { margin-top: 0; }
     .sidebar-nav { list-style: none; display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
-    .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; cursor: pointer; transition: background .2s,color .2s; color: var(--text-dim); font-size: 14px; font-weight: 500; text-decoration: none; border: 1px solid transparent; }
+    .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; cursor: pointer; transition: background var(--ease),color var(--ease); color: var(--text-dim); font-size: 14px; font-weight: 500; text-decoration: none; border: 1px solid transparent; }
     .sidebar-item i { font-size: 19px; flex-shrink: 0; }
     .sidebar-item:hover { background: var(--surface2); color: var(--text); }
     .sidebar-item.active { background: var(--green-dim); color: var(--green); border-color: var(--border); }
@@ -58,137 +83,214 @@
 
     /* ACTION CARDS */
     .action-cards { display: flex; flex-direction: column; gap: 8px; padding: 0 10px; }
-    .action-card { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 16px; cursor: pointer; border: 1px solid transparent; transition: transform .2s,box-shadow .2s,border-color .2s; position: relative; overflow: hidden; }
+    .action-card { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border-radius: 16px; cursor: pointer; border: 1px solid transparent; transition: transform var(--ease),box-shadow var(--ease),border-color var(--ease); position: relative; overflow: hidden; animation: fade-up .5s ease both; }
+    .action-card:nth-child(1) { animation-delay: .05s; }
+    .action-card:nth-child(2) { animation-delay: .12s; }
+    .action-card:nth-child(3) { animation-delay: .19s; }
+    .action-card:nth-child(4) { animation-delay: .26s; }
     .action-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity .3s; }
-    .action-card.new-trip    { background: linear-gradient(135deg,#1a4a38,#1e5c45); border-color: rgba(61,207,160,.25); box-shadow: 0 4px 20px rgba(61,207,160,.10),inset 0 1px 0 rgba(255,255,255,.06); }
-    .action-card.new-trip::before    { background: radial-gradient(ellipse at top left,rgba(61,207,160,.15) 0%,transparent 65%); }
-    .action-card.new-trip:hover      { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,207,160,.22); border-color: rgba(61,207,160,.40); }
-    .action-card.new-trip:hover::before { opacity: 1; }
-    .action-card.highlights  { background: linear-gradient(135deg,#3a1c10,#4a2415); border-color: rgba(216,90,48,.22); box-shadow: 0 4px 20px rgba(216,90,48,.08),inset 0 1px 0 rgba(255,255,255,.04); }
-    .action-card.highlights::before  { background: radial-gradient(ellipse at top left,rgba(216,90,48,.15) 0%,transparent 65%); }
-    .action-card.highlights:hover    { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(216,90,48,.18); border-color: rgba(216,90,48,.38); }
-    .action-card.highlights:hover::before { opacity: 1; }
-    .action-card.group       { background: linear-gradient(135deg,#131e3a,#1a2850); border-color: rgba(100,150,255,.20); box-shadow: 0 4px 20px rgba(100,150,255,.08),inset 0 1px 0 rgba(255,255,255,.04); }
-    .action-card.group::before       { background: radial-gradient(ellipse at top left,rgba(100,150,255,.15) 0%,transparent 65%); }
-    .action-card.group:hover         { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(100,150,255,.18); border-color: rgba(100,150,255,.35); }
-    .action-card.group:hover::before { opacity: 1; }
+    .action-card.new-trip      { background: linear-gradient(135deg,#1a4a38,#1e5c45); border-color: rgba(61,207,160,.25); box-shadow: 0 4px 20px rgba(61,207,160,.10),inset 0 1px 0 rgba(255,255,255,.06); }
+    .action-card.new-trip::before { background: radial-gradient(ellipse at top left,rgba(61,207,160,.15) 0%,transparent 65%); }
+    .action-card.new-trip:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,207,160,.22); border-color: rgba(61,207,160,.40); }
+    .action-card.highlights    { background: linear-gradient(135deg,#3a1c10,#4a2415); border-color: rgba(216,90,48,.22); box-shadow: 0 4px 20px rgba(216,90,48,.08),inset 0 1px 0 rgba(255,255,255,.04); }
+    .action-card.highlights::before { background: radial-gradient(ellipse at top left,rgba(216,90,48,.15) 0%,transparent 65%); }
+    .action-card.highlights:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(216,90,48,.18); border-color: rgba(216,90,48,.38); }
+    .action-card.group         { background: linear-gradient(135deg,#131e3a,#1a2850); border-color: var(--blue-border); box-shadow: 0 4px 20px rgba(100,150,255,.08),inset 0 1px 0 rgba(255,255,255,.04); }
+    .action-card.group::before { background: radial-gradient(ellipse at top left,rgba(100,150,255,.15) 0%,transparent 65%); }
+    .action-card.group:hover   { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(100,150,255,.18); border-color: rgba(100,150,255,.35); }
+    .action-card.route-action-card { background: linear-gradient(135deg,#1a1040,#231562); border-color: rgba(123,168,255,.22); box-shadow: 0 4px 20px rgba(123,168,255,.08),inset 0 1px 0 rgba(255,255,255,.04); }
+    .action-card.route-action-card::before { background: radial-gradient(ellipse at top left,rgba(123,168,255,.15) 0%,transparent 65%); }
+    .action-card.route-action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(123,168,255,.18); border-color: rgba(123,168,255,.35); }
+    .action-card:hover::before { opacity: 1; }
     .action-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; position: relative; z-index: 1; }
     .new-trip .action-icon   { background: rgba(61,207,160,.18);  color: var(--green);  border: 1px solid rgba(61,207,160,.25); }
     .highlights .action-icon { background: rgba(216,90,48,.18);   color: var(--orange); border: 1px solid rgba(216,90,48,.25); }
-    .group .action-icon      { background: rgba(100,150,255,.18); color: #7ba8ff;       border: 1px solid rgba(100,150,255,.25); }
+    .group .action-icon      { background: rgba(100,150,255,.18); color: var(--blue);   border: 1px solid rgba(100,150,255,.25); }
+    .route-action-card .action-icon { background: rgba(123,168,255,.18); color: var(--blue); border: 1px solid rgba(123,168,255,.25); }
     .action-text { position: relative; z-index: 1; flex: 1; min-width: 0; }
     .action-text strong { display: block; font-size: 14px; font-weight: 700; font-family: 'Outfit',sans-serif; color: var(--text); letter-spacing: -.2px; line-height: 1.2; }
     .action-text span { font-size: 11.5px; color: var(--text-mute); line-height: 1.4; }
-    .action-arrow { position: relative; z-index: 1; font-size: 16px; color: var(--text-mute); opacity: 0; transform: translateX(-6px); transition: opacity .2s,transform .2s; }
+    .action-arrow { position: relative; z-index: 1; font-size: 16px; color: var(--text-mute); opacity: 0; transform: translateX(-6px); transition: opacity var(--ease),transform var(--ease); }
     .action-card:hover .action-arrow { opacity: 1; transform: translateX(0); }
 
     /* TRIPS */
     .trip-list { list-style: none; padding: 0 10px; display: flex; flex-direction: column; gap: 4px; }
-    .trip-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; transition: background .2s; color: var(--text-dim); font-size: 13px; }
+    .trip-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; cursor: pointer; transition: background var(--ease); color: var(--text-dim); font-size: 13px; }
     .trip-item:hover { background: var(--surface2); color: var(--text); }
     .trip-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .trip-meta { margin-left: auto; font-size: 11px; color: var(--text-mute); }
-
-    /* SIDEBAR FOOTER */
     .sidebar-footer { margin-top: auto; padding: 16px 14px 0; border-top: 1px solid var(--border); }
-    .sidebar-footer-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; color: var(--text-dim); font-size: 13.5px; transition: background .2s,color .2s; }
+    .sidebar-footer-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer; color: var(--text-dim); font-size: 13.5px; transition: background var(--ease),color var(--ease); text-decoration: none; }
     .sidebar-footer-item:hover { background: var(--surface2); color: var(--text); }
     .sidebar-footer-item i { font-size: 17px; }
 
-    /* MAP */
+    /* MAP AREA */
     .map-area { position: relative; overflow: hidden; }
     #map { width: 100%; height: 100%; }
+    .gmnoprint a, .gmnoprint span, .gm-style-cc, .gm-bundled-control { display: none !important; }
+    a[href^="https://maps.google.com/maps"] { display: none !important; }
+    .gm-style .gm-style-iw-c { background: rgba(9,21,16,.97) !important; border: 1px solid rgba(93,202,165,.22) !important; border-radius: 14px !important; padding: 0 !important; box-shadow: 0 12px 36px rgba(0,0,0,.55) !important; }
+    .gm-style .gm-style-iw-d { overflow: auto !important; }
+    .gm-style .gm-ui-hover-effect { display: none !important; }
+    .gm-style .gm-style-iw-t::after { background: linear-gradient(45deg,rgba(9,21,16,.97) 50%,transparent 51%) !important; box-shadow: -2px 2px 2px 0 rgba(93,202,165,.1) !important; }
     .map-style-toggle { position: absolute; top: 16px; left: 16px; display: flex; gap: 6px; z-index: 10; }
-    .map-style-btn { padding: 7px 14px; border-radius: 50px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); color: var(--text-dim); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter',sans-serif; transition: background .2s,color .2s,border-color .2s; }
+    .map-style-btn { padding: 7px 14px; border-radius: 50px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); color: var(--text-dim); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter',sans-serif; transition: background var(--ease),color var(--ease),border-color var(--ease); }
     .map-style-btn.active, .map-style-btn:hover { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
     .map-controls { position: absolute; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
-    .map-ctrl-btn { width: 38px; height: 38px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 17px; cursor: pointer; transition: background .2s,color .2s,border-color .2s; }
+    .map-ctrl-btn { width: 38px; height: 38px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 17px; cursor: pointer; transition: background var(--ease),color var(--ease),border-color var(--ease); }
     .map-ctrl-btn:hover { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
+    .map-ctrl-btn.travel-mode-on { background: var(--green) !important; color: #062b20 !important; border-color: var(--green) !important; box-shadow: 0 0 0 3px var(--green-glow); }
     .map-stats { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; background: rgba(9,21,16,.90); border: 1px solid var(--border); backdrop-filter: blur(18px); border-radius: 18px; padding: 10px 6px; z-index: 10; white-space: nowrap; }
     .map-stat-item { display: flex; align-items: center; gap: 9px; padding: 4px 18px; }
     .map-stat-item:not(:last-child) { border-right: 1px solid var(--border); }
     .map-stat-item i { font-size: 18px; color: var(--green); }
     .map-stat-item .ms-num { font-family: 'Outfit',sans-serif; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.5px; }
     .map-stat-item .ms-lbl { font-size: 10.5px; color: var(--text-mute); text-transform: uppercase; letter-spacing: .8px; }
-    .fab { position: absolute; bottom: 96px; right: 20px; width: 52px; height: 52px; background: linear-gradient(135deg,#2db88a,#3dcfa0); border: none; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #062b20; cursor: pointer; box-shadow: 0 6px 24px rgba(61,207,160,.36); transition: transform .2s,box-shadow .2s; z-index: 10; }
+    .fab { position: absolute; bottom: 96px; right: 20px; width: 52px; height: 52px; background: linear-gradient(135deg,#2db88a,#3dcfa0); border: none; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #062b20; cursor: pointer; box-shadow: 0 6px 24px rgba(61,207,160,.36); transition: transform var(--ease),box-shadow var(--ease); z-index: 10; }
     .fab:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 36px rgba(61,207,160,.48); }
-    .fab:active { transform: scale(.96); }
+    .travel-mode-indicator { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(9,21,16,.96); border: 1px solid var(--green); border-radius: 50px; padding: 7px 20px 7px 14px; font-size: 12.5px; font-weight: 600; color: var(--green); display: flex; align-items: center; gap: 9px; z-index: 15; opacity: 0; pointer-events: none; transition: opacity .3s ease; white-space: nowrap; backdrop-filter: blur(14px); box-shadow: 0 4px 24px rgba(0,0,0,.45); }
+    .travel-mode-indicator.visible { opacity: 1; }
+    .tmi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 1.4s ease infinite; flex-shrink: 0; }
+    .draw-mode-indicator { position: absolute; bottom: 20px; right: 80px; background: rgba(9,21,16,.96); border: 1px solid rgba(123,168,255,.4); border-radius: 50px; padding: 7px 18px 7px 13px; font-size: 12.5px; font-weight: 600; color: var(--blue); display: flex; align-items: center; gap: 8px; z-index: 15; opacity: 0; pointer-events: none; transition: opacity .3s ease; white-space: nowrap; backdrop-filter: blur(14px); box-shadow: 0 4px 24px rgba(0,0,0,.45); }
+    .draw-mode-indicator.visible { opacity: 1; }
+    .dmi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 8px var(--blue); animation: pulse-dot 1.4s ease infinite; flex-shrink: 0; }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.6)} }
+    .no-map-id-notice { position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%); background: rgba(9,21,16,.96); border: 1px solid rgba(216,90,48,.4); border-radius: 12px; padding: 10px 18px; font-size: 12px; color: var(--orange); z-index: 10; display: flex; align-items: center; gap: 8px; white-space: nowrap; backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity .3s; }
+    .no-map-id-notice.visible { opacity: 1; pointer-events: all; }
+    .no-map-id-notice a { color: var(--blue); text-decoration: underline; }
+    .region-tooltip { position: absolute; pointer-events: none; background: rgba(9,21,16,.97); border: 1px solid var(--border2); border-radius: 13px; padding: 12px 16px; font-family: 'Inter',sans-serif; color: var(--text); z-index: 30; opacity: 0; transition: opacity .12s ease; white-space: nowrap; backdrop-filter: blur(20px); box-shadow: 0 12px 36px rgba(0,0,0,.55); }
+    .region-tooltip.visible { opacity: 1; }
+    .rt-name { font-family: 'Outfit',sans-serif; font-weight: 800; font-size: 15px; letter-spacing: -.3px; }
+    .rt-type { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    .rt-hint { font-size: 11.5px; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+    .rt-hint.add    { color: var(--green2); }
+    .rt-hint.remove { color: var(--orange); }
+    .rt-hint::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
 
     /* PANELS */
-    .panel { position: absolute; top: 16px; right: 72px; width: 360px; background: rgba(9,21,16,.96); border: 1px solid var(--border); backdrop-filter: blur(24px); border-radius: 22px; padding: 24px; z-index: 20; box-shadow: 0 20px 60px rgba(0,0,0,.5); transform: translateX(calc(100% + 90px)); opacity: 0; transition: transform .35s cubic-bezier(.4,0,.2,1),opacity .3s ease; pointer-events: none; max-height: calc(100vh - var(--topbar-h) - 48px); overflow-y: auto; }
+    .panel { position: absolute; top: 16px; right: 72px; width: 370px; background: rgba(9,21,16,.96); border: 1px solid var(--border); backdrop-filter: blur(24px); border-radius: 22px; padding: 24px; z-index: 20; box-shadow: 0 20px 60px rgba(0,0,0,.5); transform: translateX(calc(100% + 90px)); opacity: 0; transition: transform .35s cubic-bezier(.4,0,.2,1),opacity .3s ease; pointer-events: none; max-height: calc(100vh - var(--topbar-h) - 48px); overflow-y: auto; }
     .panel.open { transform: translateX(0); opacity: 1; pointer-events: all; }
     .panel::-webkit-scrollbar { width: 4px; }
     .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .panel-title { font-family: 'Outfit',sans-serif; font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.5px; }
-    .panel-close { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text-dim); font-size: 16px; cursor: pointer; transition: background .2s,color .2s; }
+    .panel-close { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text-dim); font-size: 16px; cursor: pointer; transition: background var(--ease),color var(--ease); }
     .panel-close:hover { background: var(--surface3); color: var(--text); }
-
-    /* FORM */
     .form-group { margin-bottom: 16px; }
     .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 7px; }
-    .form-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; font-size: 14px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color .2s,background .2s; }
+    .form-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; font-size: 14px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color var(--ease),background var(--ease); }
     .form-input::placeholder { color: var(--text-mute); }
     .form-input:focus { border-color: var(--border2); background: var(--surface2); }
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { padding: 6px 14px; border-radius: 50px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-size: 12.5px; cursor: pointer; transition: background .2s,color .2s,border-color .2s; }
+    .chip { padding: 6px 14px; border-radius: 50px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-size: 12.5px; cursor: pointer; transition: background var(--ease),color var(--ease),border-color var(--ease); user-select: none; }
     .chip:hover, .chip.selected { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
-    .btn-create { width: 100%; padding: 13px; margin-top: 8px; background: linear-gradient(135deg,#2db88a,#3dcfa0); border: none; border-radius: 14px; font-size: 14.5px; font-weight: 700; font-family: 'Outfit',sans-serif; color: #062b20; cursor: pointer; box-shadow: 0 4px 20px rgba(61,207,160,.28); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s,box-shadow .2s; }
+    .btn-create { width: 100%; padding: 13px; margin-top: 8px; background: linear-gradient(135deg,#2db88a,#3dcfa0); border: none; border-radius: 14px; font-size: 14.5px; font-weight: 700; font-family: 'Outfit',sans-serif; color: #062b20; cursor: pointer; box-shadow: 0 4px 20px rgba(61,207,160,.28); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s,box-shadow var(--ease); }
     .btn-create:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(61,207,160,.40); }
-
-    /* HIGHLIGHTS */
     .highlight-grid { display: flex; flex-direction: column; gap: 12px; }
-    .highlight-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: background .2s,border-color .2s,transform .2s; }
+    .highlight-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: background var(--ease),border-color var(--ease),transform var(--ease); }
     .highlight-card:hover { background: var(--surface2); border-color: var(--border2); transform: translateX(3px); }
     .hl-thumb { width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; }
     .hl-info { flex: 1; min-width: 0; }
-    .hl-name { font-family: 'Outfit',sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hl-name { font-family: 'Outfit',sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hl-meta { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
     .hl-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 50px; flex-shrink: 0; }
     .hl-badge.green  { background: var(--green-dim);  color: var(--green2); border: 1px solid var(--border); }
     .hl-badge.orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(216,90,48,.2); }
-
-    /* GROUP */
-    .group-header-card { background: linear-gradient(135deg,#131e3a,#1a2850); border: 1px solid rgba(100,150,255,.20); border-radius: 16px; padding: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
-    .group-icon-big { width: 52px; height: 52px; border-radius: 16px; background: rgba(100,150,255,.18); border: 1px solid rgba(100,150,255,.25); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #7ba8ff; flex-shrink: 0; }
-    .group-name { font-family: 'Outfit',sans-serif; font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.4px; }
+    .group-header-card { background: linear-gradient(135deg,#131e3a,#1a2850); border: 1px solid var(--blue-border); border-radius: 16px; padding: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
+    .group-icon-big { width: 52px; height: 52px; border-radius: 16px; background: var(--blue-dim); border: 1px solid rgba(100,150,255,.25); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--blue); flex-shrink: 0; }
+    .group-name { font-family: 'Outfit',sans-serif; font-size: 17px; font-weight: 800; color: var(--text); }
     .group-subtitle { font-size: 12px; color: var(--text-mute); margin-top: 2px; }
     .member-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .member-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 13px; background: var(--surface); border: 1px solid var(--border); transition: background .2s; cursor: pointer; }
+    .member-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 13px; background: var(--surface); border: 1px solid var(--border); transition: background var(--ease); cursor: pointer; }
     .member-row:hover { background: var(--surface2); }
-    .member-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+    .member-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Outfit',sans-serif; font-weight: 700; font-size: 13px; flex-shrink: 0; }
     .member-name { font-size: 13.5px; font-weight: 600; color: var(--text); flex: 1; }
     .member-loc  { font-size: 11.5px; color: var(--text-mute); }
     .member-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .member-status.online  { background: var(--green); box-shadow: 0 0 6px var(--green); }
     .member-status.away    { background: #f5a623; }
     .member-status.offline { background: var(--text-mute); }
-    .btn-invite { width: 100%; padding: 12px; background: rgba(100,150,255,.12); border: 1px solid rgba(100,150,255,.25); border-radius: 14px; font-size: 13.5px; font-weight: 600; font-family: 'Inter',sans-serif; color: #7ba8ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s,border-color .2s; }
-    .btn-invite:hover { background: rgba(100,150,255,.20); border-color: rgba(100,150,255,.38); }
+    .btn-invite { width: 100%; padding: 12px; background: var(--blue-dim); border: 1px solid rgba(100,150,255,.25); border-radius: 14px; font-size: 13.5px; font-weight: 600; font-family: 'Inter',sans-serif; color: var(--blue); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background var(--ease); }
+    .btn-invite:hover { background: rgba(100,150,255,.20); }
+    .travels-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 20px; }
+    .travels-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 10px; text-align: center; }
+    .ts-num { font-family: 'Outfit',sans-serif; font-size: 26px; font-weight: 800; color: var(--green); letter-spacing: -.5px; line-height: 1; }
+    .ts-lbl { font-size: 10px; color: var(--text-mute); text-transform: uppercase; letter-spacing: .8px; margin-top: 5px; }
+    .travels-group-hdr { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 8px; }
+    .travels-group-hdr span { font-size: 11px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1.4px; }
+    .btn-clear { background: none; border: none; font-size: 11px; color: var(--text-mute); cursor: pointer; font-family: 'Inter',sans-serif; padding: 3px 8px; border-radius: 6px; transition: color var(--ease),background var(--ease); }
+    .btn-clear:hover { color: var(--orange); background: var(--orange-dim); }
+    .region-list { display: flex; flex-direction: column; gap: 4px; }
+    .region-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); animation: fade-up .2s ease both; }
+    .rr-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .rr-dot.country  { background: var(--green);  box-shadow: 0 0 5px rgba(61,207,160,.5); }
+    .rr-dot.state    { background: var(--blue);   box-shadow: 0 0 5px rgba(123,168,255,.5); }
+    .rr-dot.district { background: var(--orange); box-shadow: 0 0 5px rgba(216,90,48,.5); }
+    .rr-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rr-remove { background: none; border: none; color: var(--text-mute); font-size: 15px; cursor: pointer; padding: 3px 5px; border-radius: 7px; transition: color var(--ease),background var(--ease); display: flex; align-items: center; flex-shrink: 0; }
+    .rr-remove:hover { color: var(--orange); background: var(--orange-dim); }
+    .region-empty { font-size: 12px; color: var(--text-mute); text-align: center; padding: 16px 0; font-style: italic; }
+    .btn-toggle-travel { width: 100%; margin-top: 18px; padding: 13px 16px; border-radius: 14px; font-size: 13.5px; font-weight: 600; font-family: 'Inter',sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; transition: all var(--ease); }
+    .btn-toggle-travel.off { background: var(--green-dim); border: 1px solid var(--border2); color: var(--green); }
+    .btn-toggle-travel.on  { background: var(--green); border: 1px solid var(--green); color: #062b20; }
 
-    /* ANIMATIONS */
-    @keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-    .action-card { animation: fade-up .5s ease both; }
-    .action-card:nth-child(1) { animation-delay: .05s; }
-    .action-card:nth-child(2) { animation-delay: .12s; }
-    .action-card:nth-child(3) { animation-delay: .19s; }
+    /* ROUTE BUILDER */
+    .draw-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .draw-tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; padding: 14px 10px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-size: 11.5px; font-weight: 600; font-family: 'Inter',sans-serif; cursor: pointer; transition: all var(--ease); }
+    .draw-tool-btn i { font-size: 22px; }
+    .draw-tool-btn:hover { background: rgba(123,168,255,.10); border-color: rgba(123,168,255,.3); color: var(--blue); }
+    .draw-tool-btn.danger:hover { background: var(--orange-dim); border-color: rgba(216,90,48,.3); color: var(--orange); }
+    .draw-tool-btn.active-draw { background: linear-gradient(135deg,rgba(123,168,255,.22),rgba(80,130,255,.12)); border-color: rgba(123,168,255,.55); color: var(--blue); box-shadow: 0 0 0 2px rgba(123,168,255,.15); }
+    .route-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
+    .route-list-hdr span { font-size: 11px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1.4px; }
+    .route-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+    .route-list::-webkit-scrollbar { width: 3px; }
+    .route-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .route-item { display: flex; align-items: center; gap: 10px; padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; transition: background var(--ease),border-color var(--ease); cursor: pointer; animation: fade-up .2s ease both; }
+    .route-item:hover { background: var(--surface2); border-color: rgba(123,168,255,.25); }
+    .route-item.selected { background: rgba(123,168,255,.10); border-color: rgba(123,168,255,.35); }
+    .route-type-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .route-type-icon.line    { background: rgba(123,168,255,.15); color: var(--blue); }
+    .route-type-icon.polygon { background: rgba(61,207,160,.15); color: var(--green); }
+    .route-type-icon.point   { background: rgba(216,90,48,.15); color: var(--orange); }
+    .route-item-info { flex: 1; min-width: 0; }
+    .route-item-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .route-item-meta { font-size: 11px; color: var(--text-mute); margin-top: 1px; }
+    .route-item-del { background: none; border: none; color: var(--text-mute); font-size: 15px; cursor: pointer; padding: 4px 5px; border-radius: 7px; transition: color var(--ease),background var(--ease); display: flex; align-items: center; flex-shrink: 0; }
+    .route-item-del:hover { color: var(--orange); background: var(--orange-dim); }
+    .route-empty { font-size: 12px; color: var(--text-mute); text-align: center; padding: 20px 0; font-style: italic; line-height: 1.7; }
+    .route-tip { font-size: 11.5px; color: var(--text-mute); background: rgba(123,168,255,.08); border: 1px solid rgba(123,168,255,.14); border-radius: 10px; padding: 10px 13px; margin-bottom: 16px; line-height: 1.6; }
+    .route-tip strong { color: var(--blue); }
+    .route-name-modal { position: absolute; inset: 0; z-index: 100; background: rgba(5,12,10,.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+    .route-name-modal.open { opacity: 1; pointer-events: all; }
+    .route-name-box { background: rgba(9,21,16,.98); border: 1px solid var(--border2); border-radius: 20px; padding: 28px; width: 320px; box-shadow: 0 24px 64px rgba(0,0,0,.65); animation: fade-up .2s ease; }
+    .route-name-box h3 { font-family: 'Outfit',sans-serif; font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 16px; }
+    .route-name-box input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 11px 14px; font-size: 14px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; margin-bottom: 14px; transition: border-color var(--ease); }
+    .route-name-box input:focus { border-color: rgba(123,168,255,.5); }
+    .route-name-box input::placeholder { color: var(--text-mute); }
+    .route-name-actions { display: flex; gap: 8px; }
+    .btn-save-route { flex: 1; padding: 11px; background: linear-gradient(135deg,#3d6aff,#7ba8ff); border: none; border-radius: 12px; font-size: 13.5px; font-weight: 700; font-family: 'Outfit',sans-serif; color: #fff; cursor: pointer; transition: transform .15s,box-shadow var(--ease); }
+    .btn-save-route:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(100,150,255,.4); }
+    .btn-cancel-route { padding: 11px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 600; font-family: 'Inter',sans-serif; color: var(--text-dim); cursor: pointer; transition: background var(--ease); }
+    .btn-cancel-route:hover { background: var(--surface2); }
+
+    @keyframes fade-up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
     /* MOBILE */
+    .bottom-nav { display: none; }
     @media (max-width: 768px) {
       :root { --sidebar-w: 0px; }
       .app-shell { grid-template-columns: 1fr; grid-template-rows: var(--topbar-h) 1fr 68px; }
       .sidebar { display: none; }
-      .bottom-nav { display: flex !important; background: rgba(9,21,16,.96); border-top: 1px solid var(--border); backdrop-filter: blur(20px); align-items: center; justify-content: space-around; padding: 0 8px; z-index: 50; }
+      .bottom-nav { display: flex; background: rgba(9,21,16,.96); border-top: 1px solid var(--border); backdrop-filter: blur(20px); align-items: center; justify-content: space-around; padding: 0 8px; z-index: 50; }
       .panel { width: calc(100vw - 24px); right: 12px; top: 12px; }
       .map-stats { display: none; }
     }
-    .bottom-nav { display: none; }
-    .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 16px; border-radius: 12px; cursor: pointer; color: var(--text-mute); font-size: 10px; transition: color .2s; }
+    .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 16px; border-radius: 12px; cursor: pointer; color: var(--text-mute); font-size: 10px; transition: color var(--ease); background: none; border: none; font-family: 'Inter',sans-serif; }
     .bottom-nav-item i { font-size: 22px; }
     .bottom-nav-item.active { color: var(--green); }
-    .bottom-nav-item:hover { color: var(--text); }
-    .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib { display: none !important; }
+    .map-area.highlight-mode { cursor: crosshair; }
   </style>
 </head>
 <body>
@@ -196,22 +298,22 @@
 
     <!-- TOPBAR -->
     <header class="topbar" role="banner">
-      <a href="index.html" class="topbar-logo" aria-label="Back to Pathbloom home">
-        <img src="logo.svg" alt="Pathbloom" />
+      <a href="index.html" class="topbar-logo" aria-label="Pathbloom home">
+        <img src="logo.svg" alt="Pathbloom" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('afterbegin','<span style=\'font-family:Outfit,sans-serif;font-weight:800;font-size:18px;color:#3dcfa0;letter-spacing:-.5px\'>&#127807; Pathbloom</span>')" />
       </a>
-      <div class="topbar-search" role="search">
+      <div class="topbar-search" role="search" aria-label="Search places">
         <i class="ti ti-search" aria-hidden="true"></i>
-        <input type="search" id="map-search" placeholder="Search places, trips, or people&#x2026;" aria-label="Search" />
+        <input type="text" id="map-search" placeholder="Search places, trips, or people&#x2026;" aria-label="Search places" autocomplete="off" />
       </div>
       <div class="topbar-actions">
         <button class="topbar-icon-btn" id="notif-btn" aria-label="Notifications">
-          <i class="ti ti-bell"></i>
-          <span class="badge" aria-label="3 notifications"></span>
+          <i class="ti ti-bell" aria-hidden="true"></i>
+          <span class="badge" aria-hidden="true"></span>
         </button>
-        <button class="topbar-icon-btn" id="compass-btn" aria-label="Explore community">
-          <i class="ti ti-compass"></i>
+        <button class="topbar-icon-btn" id="compass-btn" aria-label="Explore">
+          <i class="ti ti-compass" aria-hidden="true"></i>
         </button>
-        <div class="avatar" id="user-avatar" role="button" aria-label="User profile" tabindex="0">A</div>
+        <div class="avatar" id="user-avatar" role="button" tabindex="0" aria-label="User profile">A</div>
       </div>
     </header>
 
@@ -221,86 +323,108 @@
       <div class="action-cards" role="list">
 
         <div class="action-card new-trip" id="btn-new-trip" role="listitem" tabindex="0"
-             aria-label="Start a new trip" onclick="openPanel('new-trip')">
+             aria-label="Start a new trip" data-panel="new-trip">
           <div class="action-icon" aria-hidden="true"><i class="ti ti-plus"></i></div>
-          <div class="action-text">
-            <strong>New Trip</strong>
-            <span>Plan &amp; map a journey</span>
-          </div>
+          <div class="action-text"><strong>New Trip</strong><span>Plan &amp; map a journey</span></div>
           <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
         </div>
 
         <div class="action-card highlights" id="btn-highlights" role="listitem" tabindex="0"
-             aria-label="View your highlights" onclick="openPanel('highlights')">
+             aria-label="View highlights" data-panel="highlights">
           <div class="action-icon" aria-hidden="true"><i class="ti ti-star"></i></div>
-          <div class="action-text">
-            <strong>Highlights</strong>
-            <span>Your best moments</span>
-          </div>
+          <div class="action-text"><strong>Highlights</strong><span>Your best moments</span></div>
           <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
         </div>
 
         <div class="action-card group" id="btn-group" role="listitem" tabindex="0"
-             aria-label="View your travel group" onclick="openPanel('group')">
+             aria-label="View travel group" data-panel="group">
           <div class="action-icon" aria-hidden="true"><i class="ti ti-users"></i></div>
-          <div class="action-text">
-            <strong>Group</strong>
-            <span>4 travellers online</span>
-          </div>
+          <div class="action-text"><strong>Group</strong><span>4 travellers online</span></div>
+          <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
+        </div>
+
+        <div class="action-card route-action-card" id="btn-route-builder" role="listitem" tabindex="0"
+             aria-label="Open route builder" data-panel="route">
+          <div class="action-icon" aria-hidden="true"><i class="ti ti-route-2"></i></div>
+          <div class="action-text"><strong>Route Builder</strong><span>Draw routes on the map</span></div>
           <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
         </div>
 
       </div>
 
-      <div class="sidebar-divider"></div>
+      <div class="sidebar-divider" role="separator"></div>
       <p class="sidebar-label">Navigate</p>
       <ul class="sidebar-nav" role="list">
         <li><a class="sidebar-item active" href="#" id="nav-map" aria-current="page"><i class="ti ti-map-2" aria-hidden="true"></i> My Map</a></li>
         <li><a class="sidebar-item" href="#" id="nav-journal"><i class="ti ti-notebook" aria-hidden="true"></i> Journal <span class="sidebar-pill">3 new</span></a></li>
         <li><a class="sidebar-item" href="#" id="nav-explore"><i class="ti ti-world" aria-hidden="true"></i> Explore</a></li>
         <li><a class="sidebar-item" href="#" id="nav-stats"><i class="ti ti-chart-bar" aria-hidden="true"></i> Stats</a></li>
+        <li><a class="sidebar-item" href="#" id="nav-travels" data-panel="travels"><i class="ti ti-world-pin" aria-hidden="true"></i> My Travels <span class="sidebar-pill" id="travels-pill">0</span></a></li>
       </ul>
 
-      <div class="sidebar-divider"></div>
+      <div class="sidebar-divider" role="separator"></div>
       <p class="sidebar-label">Recent Trips</p>
       <ul class="trip-list" role="list">
-        <li class="trip-item"><span class="trip-dot" style="background:#3dcfa0"></span> Japan Cherry Blossom <span class="trip-meta">Apr 24</span></li>
-        <li class="trip-item"><span class="trip-dot" style="background:#D85A30"></span> Bali Retreat <span class="trip-meta">Mar 24</span></li>
-        <li class="trip-item"><span class="trip-dot" style="background:#7ba8ff"></span> Iceland Road Trip <span class="trip-meta">Jan 24</span></li>
-        <li class="trip-item"><span class="trip-dot" style="background:#5dcaa5"></span> Lisbon &amp; Porto <span class="trip-meta">Nov 23</span></li>
+        <li class="trip-item"><span class="trip-dot" style="background:var(--green)" aria-hidden="true"></span> Japan Cherry Blossom <span class="trip-meta">Apr 24</span></li>
+        <li class="trip-item"><span class="trip-dot" style="background:var(--orange)" aria-hidden="true"></span> Bali Retreat <span class="trip-meta">Mar 24</span></li>
+        <li class="trip-item"><span class="trip-dot" style="background:var(--blue)" aria-hidden="true"></span> Iceland Road Trip <span class="trip-meta">Jan 24</span></li>
+        <li class="trip-item"><span class="trip-dot" style="background:var(--green2)" aria-hidden="true"></span> Lisbon &amp; Porto <span class="trip-meta">Nov 23</span></li>
       </ul>
 
       <div class="sidebar-footer">
-        <div class="sidebar-footer-item" id="nav-settings"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
-        <div class="sidebar-footer-item" id="nav-logout" onclick="window.location.href='pathbloom_login_page.html'"><i class="ti ti-logout" aria-hidden="true"></i> Sign out</div>
+        <div class="sidebar-footer-item" id="nav-settings" role="button" tabindex="0"><i class="ti ti-settings" aria-hidden="true"></i> Settings</div>
+        <a class="sidebar-footer-item" id="nav-logout" href="pathbloom_login_page.html"><i class="ti ti-logout" aria-hidden="true"></i> Sign out</a>
       </div>
     </aside>
 
     <!-- MAP -->
     <main class="map-area" id="map-main" role="main" aria-label="Interactive travel map">
-      <div id="map" aria-label="Mapbox travel map"></div>
+      <div id="map" aria-label="Google Maps travel map"></div>
 
       <div class="map-style-toggle" role="group" aria-label="Map style">
-        <button class="map-style-btn active" id="style-streets"   onclick="setStyle('streets')">Streets</button>
-        <button class="map-style-btn"         id="style-satellite" onclick="setStyle('satellite')">Satellite</button>
-        <button class="map-style-btn"         id="style-outdoors"  onclick="setStyle('outdoors')">Outdoors</button>
+        <button class="map-style-btn active" id="style-road"       data-style="road">Road</button>
+        <button class="map-style-btn"         id="style-satellite"  data-style="satellite">Satellite</button>
+        <button class="map-style-btn"         id="style-terrain"    data-style="terrain">Terrain</button>
       </div>
 
       <div class="map-controls" role="group" aria-label="Map controls">
-        <button class="map-ctrl-btn" id="ctrl-zoom-in"    aria-label="Zoom in"           onclick="map.zoomIn()"><i class="ti ti-plus"></i></button>
-        <button class="map-ctrl-btn" id="ctrl-zoom-out"   aria-label="Zoom out"          onclick="map.zoomOut()"><i class="ti ti-minus"></i></button>
-        <button class="map-ctrl-btn" id="ctrl-locate"     aria-label="My location"       onclick="locateMe()"><i class="ti ti-current-location"></i></button>
-        <button class="map-ctrl-btn" id="ctrl-fullscreen" aria-label="Toggle fullscreen" onclick="toggleFullscreen()"><i class="ti ti-arrows-maximize"></i></button>
+        <button class="map-ctrl-btn" id="ctrl-zoom-in"     aria-label="Zoom in"><i class="ti ti-plus" aria-hidden="true"></i></button>
+        <button class="map-ctrl-btn" id="ctrl-zoom-out"    aria-label="Zoom out"><i class="ti ti-minus" aria-hidden="true"></i></button>
+        <button class="map-ctrl-btn" id="ctrl-locate"      aria-label="My location"><i class="ti ti-current-location" aria-hidden="true"></i></button>
+        <button class="map-ctrl-btn" id="ctrl-fullscreen"  aria-label="Fullscreen"><i class="ti ti-arrows-maximize" aria-hidden="true"></i></button>
+        <button class="map-ctrl-btn" id="ctrl-travel-mode" aria-label="Toggle highlight mode" title="Mark visited regions"><i class="ti ti-flag-2" aria-hidden="true"></i></button>
       </div>
 
-      <button class="fab" id="fab-add-pin" aria-label="Add a new pin" onclick="openPanel('new-trip')">
-        <i class="ti ti-map-pin-plus"></i>
+      <div class="travel-mode-indicator" id="travel-mode-indicator">
+        <span class="tmi-dot" aria-hidden="true"></span>
+        Highlight Mode &mdash; Click any region to mark visited
+      </div>
+
+      <div class="draw-mode-indicator" id="draw-mode-indicator">
+        <span class="dmi-dot" aria-hidden="true"></span>
+        <span id="draw-mode-text">Drawing Route &mdash; Click to add points, double-click to finish</span>
+      </div>
+
+      <div class="no-map-id-notice" id="no-map-id-notice">
+        &#x26A0;&#xFE0F; Set your <strong style="margin:0 3px">MAP_ID</strong> to enable regional highlighting.
+        <a href="https://console.cloud.google.com" target="_blank" rel="noopener">Setup &rarr;</a>
+      </div>
+
+      <div class="region-tooltip" id="region-tooltip" role="tooltip">
+        <div class="rt-name" id="rt-name"></div>
+        <div class="rt-type" id="rt-type"></div>
+        <div class="rt-hint" id="rt-hint"></div>
+      </div>
+
+      <button class="fab" id="fab-add-pin" aria-label="New trip" data-panel="new-trip">
+        <i class="ti ti-map-pin-plus" aria-hidden="true"></i>
       </button>
 
-      <div class="map-stats" aria-label="Your travel statistics">
+      <div class="map-stats" aria-label="Travel statistics">
         <div class="map-stat-item"><i class="ti ti-map-pin" aria-hidden="true"></i><div><div class="ms-num">48</div><div class="ms-lbl">Pins</div></div></div>
         <div class="map-stat-item"><i class="ti ti-route"   aria-hidden="true"></i><div><div class="ms-num">12</div><div class="ms-lbl">Trips</div></div></div>
-        <div class="map-stat-item"><i class="ti ti-world"   aria-hidden="true"></i><div><div class="ms-num">23</div><div class="ms-lbl">Countries</div></div></div>
+        <div class="map-stat-item"><i class="ti ti-world"   aria-hidden="true"></i><div><div class="ms-num" id="stat-countries-bar">0</div><div class="ms-lbl">Countries</div></div></div>
+        <div class="map-stat-item"><i class="ti ti-building-community" aria-hidden="true"></i><div><div class="ms-num" id="stat-states-bar">0</div><div class="ms-lbl">States</div></div></div>
         <div class="map-stat-item"><i class="ti ti-plane"   aria-hidden="true"></i><div><div class="ms-num">68K km</div><div class="ms-lbl">Travelled</div></div></div>
       </div>
 
@@ -308,16 +432,16 @@
       <aside class="panel" id="panel-new-trip" role="dialog" aria-modal="true" aria-label="New trip">
         <div class="panel-header">
           <h2 class="panel-title">&#x2708;&#xFE0F; New Trip</h2>
-          <button class="panel-close" onclick="closePanel()" aria-label="Close"><i class="ti ti-x"></i></button>
+          <button class="panel-close" id="close-new-trip" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
         </div>
-        <form onsubmit="handleCreateTrip(event)">
+        <form id="new-trip-form" novalidate>
           <div class="form-group">
             <label class="form-label" for="trip-name">Trip Name</label>
             <input class="form-input" id="trip-name" type="text" placeholder="e.g. Santorini Escape" required />
           </div>
           <div class="form-group date-row">
-            <div><label class="form-label" for="trip-start">Start Date</label><input class="form-input" id="trip-start" type="date" /></div>
-            <div><label class="form-label" for="trip-end">End Date</label><input class="form-input" id="trip-end" type="date" /></div>
+            <div><label class="form-label" for="trip-start">Start</label><input class="form-input" id="trip-start" type="date" /></div>
+            <div><label class="form-label" for="trip-end">End</label><input class="form-input" id="trip-end" type="date" /></div>
           </div>
           <div class="form-group">
             <label class="form-label" for="trip-dest">Destinations</label>
@@ -326,20 +450,20 @@
           <div class="form-group">
             <label class="form-label">Trip Vibe</label>
             <div class="chips" role="group">
-              <span class="chip selected" tabindex="0" onclick="toggleChip(this)">&#x1F3D6;&#xFE0F; Beach</span>
-              <span class="chip" tabindex="0" onclick="toggleChip(this)">&#x1F3D4;&#xFE0F; Adventure</span>
-              <span class="chip" tabindex="0" onclick="toggleChip(this)">&#x1F3DB;&#xFE0F; Culture</span>
-              <span class="chip" tabindex="0" onclick="toggleChip(this)">&#x1F35C; Food</span>
-              <span class="chip" tabindex="0" onclick="toggleChip(this)">&#x1F9D8; Wellness</span>
-              <span class="chip" tabindex="0" onclick="toggleChip(this)">&#x1F389; Party</span>
+              <span class="chip selected" role="checkbox" aria-checked="true" tabindex="0">&#x1F3D6;&#xFE0F; Beach</span>
+              <span class="chip" role="checkbox" aria-checked="false" tabindex="0">&#x1F3D4;&#xFE0F; Adventure</span>
+              <span class="chip" role="checkbox" aria-checked="false" tabindex="0">&#x1F3DB;&#xFE0F; Culture</span>
+              <span class="chip" role="checkbox" aria-checked="false" tabindex="0">&#x1F35C; Food</span>
+              <span class="chip" role="checkbox" aria-checked="false" tabindex="0">&#x1F9D8; Wellness</span>
+              <span class="chip" role="checkbox" aria-checked="false" tabindex="0">&#x1F389; Party</span>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="trip-notes">Notes</label>
-            <textarea class="form-input" id="trip-notes" rows="3" placeholder="What's the vibe of this trip&#x2026;" style="resize:vertical"></textarea>
+            <textarea class="form-input" id="trip-notes" rows="3" placeholder="What's the vibe&#x2026;" style="resize:vertical"></textarea>
           </div>
           <button class="btn-create" type="submit" id="create-trip-btn">
-            <i class="ti ti-map-pin-plus"></i> Create Trip &amp; Drop Pin
+            <i class="ti ti-map-pin-plus" aria-hidden="true"></i> Create Trip &amp; Drop Pin
           </button>
         </form>
       </aside>
@@ -348,35 +472,14 @@
       <aside class="panel" id="panel-highlights" role="dialog" aria-modal="true" aria-label="Highlights">
         <div class="panel-header">
           <h2 class="panel-title">&#x2B50; Highlights</h2>
-          <button class="panel-close" onclick="closePanel()" aria-label="Close"><i class="ti ti-x"></i></button>
+          <button class="panel-close" id="close-highlights" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
         </div>
         <p style="font-size:13px;color:var(--text-mute);margin-bottom:18px;">Your most-loved moments and places.</p>
         <div class="highlight-grid" role="list">
-          <div class="highlight-card" role="listitem" tabindex="0">
-            <div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F338;</div>
-            <div class="hl-info"><div class="hl-name">Philosopher's Path, Kyoto</div><div class="hl-meta">Apr 2024 &middot; Japan Cherry Blossom</div></div>
-            <span class="hl-badge green">Top Pick</span>
-          </div>
-          <div class="highlight-card" role="listitem" tabindex="0">
-            <div class="hl-thumb" style="background:rgba(216,90,48,0.12)">&#x1F30A;</div>
-            <div class="hl-info"><div class="hl-name">Kuta Beach Sunrise</div><div class="hl-meta">Mar 2024 &middot; Bali Retreat</div></div>
-            <span class="hl-badge orange">Favourite</span>
-          </div>
-          <div class="highlight-card" role="listitem" tabindex="0">
-            <div class="hl-thumb" style="background:rgba(100,150,255,0.12)">&#x1F30B;</div>
-            <div class="hl-info"><div class="hl-name">Snaefellsjokull Glacier</div><div class="hl-meta">Jan 2024 &middot; Iceland Road Trip</div></div>
-            <span class="hl-badge green">Top Pick</span>
-          </div>
-          <div class="highlight-card" role="listitem" tabindex="0">
-            <div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F377;</div>
-            <div class="hl-info"><div class="hl-name">LX Factory, Lisbon</div><div class="hl-meta">Nov 2023 &middot; Lisbon &amp; Porto</div></div>
-            <span class="hl-badge green">Top Pick</span>
-          </div>
-          <div class="highlight-card" role="listitem" tabindex="0">
-            <div class="hl-thumb" style="background:rgba(216,90,48,0.12)">&#x1F5FC;</div>
-            <div class="hl-info"><div class="hl-name">Eiffel Tower at Midnight</div><div class="hl-meta">Sep 2023 &middot; Paris Escape</div></div>
-            <span class="hl-badge orange">Favourite</span>
-          </div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F338;</div><div class="hl-info"><div class="hl-name">Philosopher's Path, Kyoto</div><div class="hl-meta">Apr 2024 &middot; Japan Cherry Blossom</div></div><span class="hl-badge green">Top Pick</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(216,90,48,0.12)">&#x1F30A;</div><div class="hl-info"><div class="hl-name">Kuta Beach Sunrise</div><div class="hl-meta">Mar 2024 &middot; Bali Retreat</div></div><span class="hl-badge orange">Favourite</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(100,150,255,0.12)">&#x1F30B;</div><div class="hl-info"><div class="hl-name">Snaefellsjokull Glacier</div><div class="hl-meta">Jan 2024 &middot; Iceland Road Trip</div></div><span class="hl-badge green">Top Pick</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F377;</div><div class="hl-info"><div class="hl-name">LX Factory, Lisbon</div><div class="hl-meta">Nov 2023 &middot; Lisbon &amp; Porto</div></div><span class="hl-badge green">Top Pick</span></div>
         </div>
       </aside>
 
@@ -384,164 +487,781 @@
       <aside class="panel" id="panel-group" role="dialog" aria-modal="true" aria-label="Group">
         <div class="panel-header">
           <h2 class="panel-title">&#x1F465; Group</h2>
-          <button class="panel-close" onclick="closePanel()" aria-label="Close"><i class="ti ti-x"></i></button>
+          <button class="panel-close" id="close-group" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
         </div>
         <div class="group-header-card">
-          <div class="group-icon-big" aria-hidden="true"><i class="ti ti-users"></i></div>
-          <div>
-            <div class="group-name">The Wanderers &#x2708;&#xFE0F;</div>
-            <div class="group-subtitle">5 members &middot; Planning next trip</div>
-          </div>
+          <div class="group-icon-big"><i class="ti ti-users"></i></div>
+          <div><div class="group-name">The Wanderers &#x2708;&#xFE0F;</div><div class="group-subtitle">5 members &middot; Planning next trip</div></div>
         </div>
-        <p class="sidebar-label" style="padding:0;margin-bottom:10px;">Members</p>
         <div class="member-list" role="list">
-          <div class="member-row" role="listitem">
-            <div class="member-avatar" style="background:linear-gradient(135deg,#2ab88a,#3dcfa0)">A</div>
-            <div><div class="member-name">Aryan (You)</div><div class="member-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> Mumbai, IN</div></div>
-            <span class="member-status online" title="Online" aria-label="Online"></span>
-          </div>
-          <div class="member-row" role="listitem">
-            <div class="member-avatar" style="background:linear-gradient(135deg,#5467ff,#7ba8ff)">S</div>
-            <div><div class="member-name">Sofia M.</div><div class="member-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> Lisbon, PT</div></div>
-            <span class="member-status online" title="Online" aria-label="Online"></span>
-          </div>
-          <div class="member-row" role="listitem">
-            <div class="member-avatar" style="background:linear-gradient(135deg,#D85A30,#e8845a)">K</div>
-            <div><div class="member-name">Kenji T.</div><div class="member-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> Tokyo, JP</div></div>
-            <span class="member-status away" title="Away" aria-label="Away"></span>
-          </div>
-          <div class="member-row" role="listitem">
-            <div class="member-avatar" style="background:linear-gradient(135deg,#8e44ad,#b07ccc)">L</div>
-            <div><div class="member-name">Layla R.</div><div class="member-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> Dubai, AE</div></div>
-            <span class="member-status online" title="Online" aria-label="Online"></span>
-          </div>
-          <div class="member-row" role="listitem">
-            <div class="member-avatar" style="background:linear-gradient(135deg,#16a085,#1abc9c)">M</div>
-            <div><div class="member-name">Marco P.</div><div class="member-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> Rome, IT</div></div>
-            <span class="member-status offline" title="Offline" aria-label="Offline"></span>
+          <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#2ab88a,#3dcfa0)">A</div><div><div class="member-name">Aryan (You)</div><div class="member-loc"><i class="ti ti-map-pin"></i> Mumbai, IN</div></div><span class="member-status online"></span></div>
+          <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#5467ff,#7ba8ff)">S</div><div><div class="member-name">Sofia M.</div><div class="member-loc"><i class="ti ti-map-pin"></i> Lisbon, PT</div></div><span class="member-status online"></span></div>
+          <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#D85A30,#e8845a)">K</div><div><div class="member-name">Kenji T.</div><div class="member-loc"><i class="ti ti-map-pin"></i> Tokyo, JP</div></div><span class="member-status away"></span></div>
+          <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#8e44ad,#b07ccc)">L</div><div><div class="member-name">Layla R.</div><div class="member-loc"><i class="ti ti-map-pin"></i> Dubai, AE</div></div><span class="member-status online"></span></div>
+          <div class="member-row"><div class="member-avatar" style="background:linear-gradient(135deg,#16a085,#1abc9c)">M</div><div><div class="member-name">Marco P.</div><div class="member-loc"><i class="ti ti-map-pin"></i> Rome, IT</div></div><span class="member-status offline"></span></div>
+        </div>
+        <button class="btn-invite"><i class="ti ti-user-plus"></i> Invite a Traveller</button>
+      </aside>
+
+      <!-- PANEL: My Travels -->
+      <aside class="panel" id="panel-travels" role="dialog" aria-modal="true" aria-label="My Travels">
+        <div class="panel-header">
+          <h2 class="panel-title">&#x1F30D; My Travels</h2>
+          <button class="panel-close" id="close-travels" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-mute);margin-bottom:16px;line-height:1.6;">Enable <strong style="color:var(--green)">Highlight Mode</strong>, then click any country, state, or district on the map to mark it visited.</p>
+        <div class="travels-summary">
+          <div class="travels-stat"><div class="ts-num" id="stat-countries">0</div><div class="ts-lbl">Countries</div></div>
+          <div class="travels-stat"><div class="ts-num" id="stat-states">0</div><div class="ts-lbl">States</div></div>
+          <div class="travels-stat"><div class="ts-num" id="stat-districts">0</div><div class="ts-lbl">Districts</div></div>
+        </div>
+        <div class="travels-group-hdr"><span>&#x1F7E2; Countries</span><button class="btn-clear" id="clear-countries">Clear all</button></div>
+        <div class="region-list" id="list-countries"><div class="region-empty">None marked yet</div></div>
+        <div class="travels-group-hdr"><span>&#x1F535; States &amp; Provinces</span><button class="btn-clear" id="clear-states">Clear all</button></div>
+        <div class="region-list" id="list-states"><div class="region-empty">None marked yet</div></div>
+        <div class="travels-group-hdr"><span>&#x1F7E0; Districts &amp; Counties</span><button class="btn-clear" id="clear-districts">Clear all</button></div>
+        <div class="region-list" id="list-districts"><div class="region-empty">None marked yet</div></div>
+        <button class="btn-toggle-travel off" id="panel-travel-mode-btn">
+          <i class="ti ti-flag-2" aria-hidden="true"></i>
+          <span id="panel-travel-mode-label">Enable Highlight Mode</span>
+        </button>
+      </aside>
+
+      <!-- PANEL: Route Builder -->
+      <aside class="panel" id="panel-route" role="dialog" aria-modal="true" aria-label="Route Builder">
+        <div class="panel-header">
+          <h2 class="panel-title">&#x1F5FA; Route Builder</h2>
+          <button class="panel-close" id="close-route" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="route-tip">
+          <strong>How to draw:</strong> Select a tool below, click on the map to add points.
+          <strong>Double-click</strong> to finish a route or area.
+        </div>
+        <div class="draw-tools" role="group" aria-label="Drawing tools">
+          <button class="draw-tool-btn" id="tool-line"><i class="ti ti-pencil"></i>Draw Route</button>
+          <button class="draw-tool-btn" id="tool-polygon"><i class="ti ti-polygon"></i>Draw Area</button>
+          <button class="draw-tool-btn" id="tool-point"><i class="ti ti-map-pin-plus"></i>Add Waypoint</button>
+          <button class="draw-tool-btn danger" id="tool-delete"><i class="ti ti-trash"></i>Delete Selected</button>
+        </div>
+        <div class="route-list-hdr">
+          <span>&#x1F4CD; Saved Routes</span>
+          <button class="btn-clear" id="clear-all-routes">Clear all</button>
+        </div>
+        <div class="route-list" id="route-list-container">
+          <div class="route-empty" id="route-list-empty">No routes drawn yet.<br>Select a tool above and start drawing!</div>
+        </div>
+      </aside>
+
+      <!-- Route Name Modal -->
+      <div class="route-name-modal" id="route-name-modal" role="dialog" aria-modal="true">
+        <div class="route-name-box">
+          <h3>&#x270F;&#xFE0F; Name this route</h3>
+          <input type="text" id="route-name-input" placeholder="e.g. Tokyo city walk&hellip;" maxlength="60" />
+          <div class="route-name-actions">
+            <button class="btn-save-route" id="btn-save-route-name">Save Route</button>
+            <button class="btn-cancel-route" id="btn-cancel-route-name">Cancel</button>
           </div>
         </div>
-        <button class="btn-invite" id="invite-member-btn"><i class="ti ti-user-plus"></i> Invite a Traveller</button>
-      </aside>
+      </div>
     </main>
 
     <!-- MOBILE BOTTOM NAV -->
     <nav class="bottom-nav" id="bottom-nav" role="navigation" aria-label="Mobile navigation">
-      <div class="bottom-nav-item active"  id="mnav-map"><i class="ti ti-map-2"></i> Map</div>
-      <div class="bottom-nav-item" id="mnav-new-trip"   onclick="openPanel('new-trip')"><i class="ti ti-plus"></i> New Trip</div>
-      <div class="bottom-nav-item" id="mnav-highlights" onclick="openPanel('highlights')"><i class="ti ti-star"></i> Highlights</div>
-      <div class="bottom-nav-item" id="mnav-group"      onclick="openPanel('group')"><i class="ti ti-users"></i> Group</div>
+      <button class="bottom-nav-item active"><i class="ti ti-map-2"></i> Map</button>
+      <button class="bottom-nav-item" data-panel="new-trip"><i class="ti ti-plus"></i> New Trip</button>
+      <button class="bottom-nav-item" data-panel="highlights"><i class="ti ti-star"></i> Highlights</button>
+      <button class="bottom-nav-item" data-panel="group"><i class="ti ti-users"></i> Group</button>
+      <button class="bottom-nav-item" data-panel="travels"><i class="ti ti-world-pin"></i> Travels</button>
     </nav>
 
   </div>
 
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+  /* ======================================================
+     GOOGLE MAPS DARK STYLE (used when no Map ID is set)
+  ====================================================== */
+  const DARK_MAP_STYLE = [
+    { elementType: 'geometry', stylers: [{ color: '#0a1a14' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#091510' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#3d6457' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1e3a2f' }] },
+    { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#2ab88a' }, { weight: 1.2 }] },
+    { featureType: 'administrative.province', elementType: 'geometry.stroke', stylers: [{ color: '#1a4a38' }, { weight: 0.6 }] },
+    { featureType: 'administrative.land_parcel', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#091510' }] },
+    { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0d2218' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#162e22' }] },
+    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#4a7a68' }] },
+    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#1e3a2e' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1e4a35' }] },
+    { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#3dcfa0' }] },
+    { featureType: 'road.local', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#0d1c18' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#040e0b' }] },
+    { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d6457' }] },
+  ];
 
-    const STYLES = {
-      streets:   'mapbox://styles/mapbox/dark-v11',
-      satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-      outdoors:  'mapbox://styles/mapbox/outdoors-v12',
+  /* ======================================================
+     GLOBALS
+  ====================================================== */
+  const HAS_MAP_ID = typeof MAP_ID !== 'undefined' && MAP_ID && MAP_ID !== 'YOUR_MAP_ID';
+  let map, autocomplete, searchMarker = null;
+  let currentMapType = 'road';
+  let isPanning = true, lastPanTime = 0, panAnimFrame = null;
+
+  /* ======================================================
+     initMap — Google Maps callback
+  ====================================================== */
+  function initMap() {
+    const opts = {
+      center: { lat: 20, lng: 10 }, zoom: 3,
+      mapTypeId: 'roadmap', disableDefaultUI: true,
+      gestureHandling: 'greedy', keyboardShortcuts: false, clickableIcons: false,
     };
-    let currentStyle = 'streets';
+    if (HAS_MAP_ID) opts.mapId = MAP_ID;
+    else opts.styles = DARK_MAP_STYLE;
 
-    const map = new mapboxgl.Map({
-      container: 'map', style: STYLES.streets,
-      center: [10, 20], zoom: 2.2, projection: 'globe', antialias: true,
+    map = new google.maps.Map(document.getElementById('map'), opts);
+
+    setupAutocomplete();
+    addMarkers();
+    setupRegionBoundaries();
+    setupMapControls();
+    bindDrawListeners();
+    restoreDrawnRoutes();
+    startPan();
+  }
+
+  /* ======================================================
+     PLACES AUTOCOMPLETE
+  ====================================================== */
+  function setupAutocomplete() {
+    const input = document.getElementById('map-search');
+    autocomplete = new google.maps.places.Autocomplete(input, {
+      fields: ['geometry', 'name', 'formatted_address'],
     });
-
-    map.on('style.load', () => {
-      map.setFog({ color:'rgb(8,20,15)', 'high-color':'rgb(15,40,30)', 'horizon-blend':0.03, 'space-color':'rgb(5,12,10)', 'star-intensity':0.7 });
-      addMarkers();
-    });
-
-    const pins = [
-      { lng:139.6503, lat: 35.6762, label:'Tokyo',    emoji:'🏯', color:'#3dcfa0', trip:'Japan Cherry Blossom' },
-      { lng:  2.3522, lat: 48.8566, label:'Paris',    emoji:'🗼', color:'#3dcfa0', trip:'Paris Escape' },
-      { lng:-74.0060, lat: 40.7128, label:'New York', emoji:'🗽', color:'#5dcaa5', trip:'Americas Tour' },
-      { lng:151.2093, lat:-33.8680, label:'Sydney',   emoji:'🦘', color:'#5dcaa5', trip:'Australia Loop' },
-      { lng:115.1889, lat: -8.4090, label:'Bali',     emoji:'🌊', color:'#D85A30', trip:'Bali Retreat' },
-      { lng: -9.1399, lat: 38.7169, label:'Lisbon',   emoji:'🍷', color:'#3dcfa0', trip:'Lisbon & Porto' },
-      { lng: 78.0421, lat: 27.1751, label:'Agra',     emoji:'🕌', color:'#D85A30', trip:'India Journey' },
-      { lng: 28.9784, lat: 41.0082, label:'Istanbul', emoji:'🌙', color:'#5dcaa5', trip:'Turkey Trip' },
-      { lng: 55.2744, lat: 25.1972, label:'Dubai',    emoji:'🏙️', color:'#3dcfa0', trip:'Gulf Explorer' },
-      { lng:-19.0208, lat: 64.9631, label:'Iceland',  emoji:'🌋', color:'#7ba8ff', trip:'Iceland Road Trip' },
-      { lng:138.2529, lat: 36.2048, label:'Kyoto',    emoji:'🌸', color:'#3dcfa0', trip:'Japan Cherry Blossom' },
-      { lng:-43.1729, lat:-22.9080, label:'Rio',      emoji:'🎉', color:'#D85A30', trip:'South America' },
-    ];
-    const markers = [];
-
-    function addMarkers() {
-      markers.forEach(m => m.remove()); markers.length = 0;
-      pins.forEach(pin => {
-        const el = document.createElement('div');
-        el.style.cssText = `width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${pin.color};border:2.5px solid rgba(9,21,16,0.8);box-shadow:0 4px 14px rgba(0,0,0,0.5),0 0 0 3px ${pin.color}33;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;`;
-        const inner = document.createElement('span');
-        inner.style.cssText = 'font-size:14px;transform:rotate(45deg);display:block;';
-        inner.textContent = pin.emoji; el.appendChild(inner);
-        el.addEventListener('mouseenter', () => { el.style.transform='rotate(-45deg) scale(1.3)'; el.style.boxShadow=`0 8px 24px rgba(0,0,0,0.6),0 0 0 4px ${pin.color}55`; });
-        el.addEventListener('mouseleave', () => { el.style.transform='rotate(-45deg) scale(1)'; el.style.boxShadow=`0 4px 14px rgba(0,0,0,0.5),0 0 0 3px ${pin.color}33`; });
-        const popup = new mapboxgl.Popup({ offset:28, closeButton:false, maxWidth:'220px' })
-          .setHTML(`<div style="background:rgba(9,21,16,0.96);border:1px solid rgba(93,202,165,0.22);border-radius:12px;padding:12px 16px;font-family:Inter,sans-serif;color:#e1f0ea;"><div style="font-size:20px;margin-bottom:4px">${pin.emoji}</div><div style="font-family:Outfit,sans-serif;font-size:15px;font-weight:700">${pin.label}</div><div style="font-size:11px;color:#3d6457;margin-top:2px">${pin.trip}</div><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(61,207,160,.12);border:1px solid rgba(93,202,165,.2);color:#5dcaa5;font-size:10px;padding:2px 9px;border-radius:50px;font-weight:600;cursor:pointer">View</span><span style="background:rgba(61,207,160,.12);border:1px solid rgba(93,202,165,.2);color:#5dcaa5;font-size:10px;padding:2px 9px;border-radius:50px;font-weight:600;cursor:pointer">Add Note</span></div></div>`);
-        markers.push(new mapboxgl.Marker(el).setLngLat([pin.lng,pin.lat]).setPopup(popup).addTo(map));
+    autocomplete.bindTo('bounds', map);
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry?.location) return;
+      if (searchMarker) { searchMarker.setMap(null); searchMarker = null; }
+      if (place.geometry.viewport) map.fitBounds(place.geometry.viewport);
+      else { map.setCenter(place.geometry.location); map.setZoom(12); }
+      searchMarker = new google.maps.Marker({
+        position: place.geometry.location, map, title: place.name,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#3dcfa0', fillOpacity: 1, strokeColor: '#062b20', strokeWeight: 2.5 },
+        animation: google.maps.Animation.DROP, zIndex: 200,
       });
-    }
+      const iw = new google.maps.InfoWindow({
+        content: `<div style="padding:10px 14px"><div style="font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:#e1f0ea">${place.name}</div><div style="font-size:11px;color:#3d6457;margin-top:3px">${place.formatted_address || ''}</div></div>`,
+      });
+      iw.open(map, searchMarker);
+      searchMarker.addListener('click', () => iw.open(map, searchMarker));
+      stopPan();
+    });
+    input.addEventListener('input', () => { if (!input.value && searchMarker) { searchMarker.setMap(null); searchMarker = null; } });
+  }
 
-    function setStyle(style) {
-      if (currentStyle===style) return; currentStyle=style;
-      document.querySelectorAll('.map-style-btn').forEach(b=>b.classList.remove('active'));
-      document.getElementById('style-'+style).classList.add('active');
-      map.setStyle(STYLES[style]);
+  /* ======================================================
+     SMOOTH PAN ANIMATION
+  ====================================================== */
+  function startPan() { lastPanTime = performance.now(); panAnimFrame = requestAnimationFrame(panStep); }
+  function panStep(ts) {
+    if (isPanning && map?.getCenter) {
+      const c = map.getCenter();
+      map.setCenter({ lat: c.lat(), lng: c.lng() + 0.006 / 16 * (ts - lastPanTime) });
     }
+    lastPanTime = ts;
+    panAnimFrame = requestAnimationFrame(panStep);
+  }
+  function stopPan() { isPanning = false; setTimeout(() => { isPanning = true; }, 5000); }
 
-    function locateMe() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(pos => map.flyTo({ center:[pos.coords.longitude,pos.coords.latitude], zoom:10, duration:1800, essential:true }));
+  /* ======================================================
+     CITY MARKERS
+  ====================================================== */
+  const CITY_PINS = [
+    { lat:35.6762,  lng:139.6503, label:'Tokyo',    emoji:'🏯', color:'#3dcfa0', trip:'Japan Cherry Blossom' },
+    { lat:48.8566,  lng:2.3522,   label:'Paris',    emoji:'🗼', color:'#3dcfa0', trip:'Paris Escape' },
+    { lat:40.7128,  lng:-74.0060, label:'New York', emoji:'🗽', color:'#5dcaa5', trip:'Americas Tour' },
+    { lat:-33.8680, lng:151.2093, label:'Sydney',   emoji:'🦘', color:'#5dcaa5', trip:'Australia Loop' },
+    { lat:-8.4090,  lng:115.1889, label:'Bali',     emoji:'🌊', color:'#D85A30', trip:'Bali Retreat' },
+    { lat:38.7169,  lng:-9.1399,  label:'Lisbon',   emoji:'🍷', color:'#3dcfa0', trip:'Lisbon & Porto' },
+    { lat:27.1751,  lng:78.0421,  label:'Agra',     emoji:'🕌', color:'#D85A30', trip:'India Journey' },
+    { lat:41.0082,  lng:28.9784,  label:'Istanbul', emoji:'🌙', color:'#5dcaa5', trip:'Turkey Trip' },
+    { lat:25.1972,  lng:55.2744,  label:'Dubai',    emoji:'🏙️', color:'#3dcfa0', trip:'Gulf Explorer' },
+    { lat:64.9631,  lng:-19.0208, label:'Iceland',  emoji:'🌋', color:'#7ba8ff', trip:'Iceland Road Trip' },
+    { lat:36.2048,  lng:138.2529, label:'Kyoto',    emoji:'🌸', color:'#3dcfa0', trip:'Japan Cherry Blossom' },
+    { lat:-22.9080, lng:-43.1729, label:'Rio',      emoji:'🎉', color:'#D85A30', trip:'South America' },
+  ];
+  const cityMarkers = [];
+
+  function addMarkers() {
+    CITY_PINS.forEach(pin => {
+      const svgIcon = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="38" height="46" viewBox="0 0 38 46"><path d="M19 1C8.5 1 1 8.8 1 18.8c0 13.5 18 26.2 18 26.2s18-12.7 18-26.2C37 8.8 29.5 1 19 1z" fill="${pin.color}" stroke="#062b20" stroke-width="1.5"/><circle cx="19" cy="19" r="11" fill="#062b20" opacity="0.45"/><text x="19" y="24" font-size="13" text-anchor="middle">${pin.emoji}</text></svg>`);
+      const marker = new google.maps.Marker({
+        position: { lat: pin.lat, lng: pin.lng }, map, title: pin.label,
+        icon: { url: `data:image/svg+xml;charset=UTF-8,${svgIcon}`, scaledSize: new google.maps.Size(38,46), anchor: new google.maps.Point(19,46) },
+        zIndex: 100,
+      });
+      const iw = new google.maps.InfoWindow({
+        content: `<div style="padding:12px 14px;min-width:160px"><div style="font-size:20px;margin-bottom:4px">${pin.emoji}</div><div style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:#e1f0ea">${pin.label}</div><div style="font-size:11px;color:#3d6457;margin-top:2px">${pin.trip}</div><div style="margin-top:8px;display:flex;gap:6px"><span style="background:rgba(61,207,160,.15);border:1px solid rgba(93,202,165,.25);color:#5dcaa5;font-size:10px;padding:3px 10px;border-radius:50px;font-weight:600;cursor:pointer">View</span><span style="background:rgba(61,207,160,.15);border:1px solid rgba(93,202,165,.25);color:#5dcaa5;font-size:10px;padding:3px 10px;border-radius:50px;font-weight:600;cursor:pointer">Add Note</span></div></div>`,
+      });
+      marker.addListener('click', () => { cityMarkers.forEach(({iw:w}) => w.close()); iw.open(map,marker); stopPan(); });
+      map.addListener('click', () => iw.close());
+      cityMarkers.push({ marker, iw });
+    });
+  }
+
+  /* ======================================================
+     REGIONAL BOUNDARY HIGHLIGHTING (Data-Driven Styling)
+  ====================================================== */
+  const STORAGE_KEY = 'pathbloom_visited_v3';
+  let visitedRegions = { countries:[], states:[], districts:[] };
+  const placeIdIndex = {}; // placeId -> { name, type }
+  let featureLayers = {};
+  const LAYER_CFG = {
+    countries: { apiName:'COUNTRY',                    color:'#3dcfa0', label:'Country' },
+    states:    { apiName:'ADMINISTRATIVE_AREA_LEVEL_1', color:'#7ba8ff', label:'State / Province' },
+    districts: { apiName:'ADMINISTRATIVE_AREA_LEVEL_2', color:'#D85A30', label:'District / County' },
+  };
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        visitedRegions.countries  = p.countries  || [];
+        visitedRegions.states     = p.states     || [];
+        visitedRegions.districts  = p.districts  || [];
+        ['countries','states','districts'].forEach(t =>
+          visitedRegions[t].forEach(r => { placeIdIndex[r.placeId] = { name:r.name, type:t }; })
+        );
+      }
+    } catch(e) {}
+  }
+
+  function saveToStorage() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(visitedRegions)); } catch(e) {}
+  }
+
+  function setupRegionBoundaries() {
+    loadFromStorage();
+    if (!HAS_MAP_ID) return;
+    Object.entries(LAYER_CFG).forEach(([type, cfg]) => {
+      try {
+        const layer = map.getFeatureLayer(cfg.apiName);
+        featureLayers[type] = layer;
+        const applyStyle = () => {
+          layer.style = opts => {
+            if (placeIdIndex[opts.feature.placeId]) {
+              return { fillColor:cfg.color, fillOpacity:0.38, strokeColor:cfg.color, strokeOpacity:0.7, strokeWeight:1 };
+            }
+            return {};
+          };
+        };
+        applyStyle();
+
+        layer.addListener('mousemove', e => {
+          if (!travelMode) return;
+          const feat = e.features[0]; if (!feat) return;
+          const name = feat.displayName || feat.placeId;
+          rtName.textContent = name;
+          rtType.textContent = cfg.label;
+          const already = !!placeIdIndex[feat.placeId];
+          rtHint.textContent = already ? 'Click to remove' : 'Click to mark visited';
+          rtHint.className = 'rt-hint ' + (already ? 'remove' : 'add');
+          // Tooltip position via latLng->pixel
+          const proj = map.getProjection();
+          if (proj) {
+            const wp = proj.fromLatLngToPoint(e.latLng);
+            const nw = proj.fromLatLngToPoint(new google.maps.LatLng(map.getBounds().getNorthEast().lat(), map.getBounds().getSouthWest().lng()));
+            const scale = Math.pow(2, map.getZoom());
+            const mx = document.getElementById('map-main').getBoundingClientRect();
+            const px = (wp.x - nw.x) * scale;
+            const py = (wp.y - nw.y) * scale;
+            regionTooltip.style.left = Math.min(px + 18, mx.width - 260) + 'px';
+            regionTooltip.style.top  = Math.max(py - 12, 8) + 'px';
+          }
+          regionTooltip.classList.add('visible');
+        });
+
+        layer.addListener('mouseleave', () => regionTooltip.classList.remove('visible'));
+
+        layer.addListener('click', e => {
+          if (!travelMode) return;
+          const feat = e.features[0]; if (!feat) return;
+          toggleRegion(type, feat.placeId, feat.displayName || feat.placeId, cfg, applyStyle);
+        });
+      } catch(e) { console.warn('[Pathbloom] Feature layer unavailable:', cfg.apiName, e.message); }
+    });
+  }
+
+  function toggleRegion(type, placeId, name, cfg, applyStyle) {
+    if (placeIdIndex[placeId]) {
+      visitedRegions[type] = visitedRegions[type].filter(r => r.placeId !== placeId);
+      delete placeIdIndex[placeId];
+      showToast(name, false);
+    } else {
+      visitedRegions[type].push({ placeId, name });
+      placeIdIndex[placeId] = { name, type };
+      showToast(name, true);
     }
+    saveToStorage();
+    // Refresh all layer styles
+    Object.entries(LAYER_CFG).forEach(([t, c]) => {
+      const lyr = featureLayers[t]; if (!lyr) return;
+      lyr.style = opts => {
+        if (placeIdIndex[opts.feature.placeId]) {
+          return { fillColor:c.color, fillOpacity:0.38, strokeColor:c.color, strokeOpacity:0.7, strokeWeight:1 };
+        }
+        return {};
+      };
+    });
+    updateTravelsPanel();
+  }
 
-    function toggleFullscreen() {
+  function removeRegion(type, placeId) {
+    visitedRegions[type] = visitedRegions[type].filter(r => r.placeId !== placeId);
+    delete placeIdIndex[placeId];
+    saveToStorage();
+    Object.entries(LAYER_CFG).forEach(([t, c]) => {
+      const lyr = featureLayers[t]; if (!lyr) return;
+      lyr.style = opts => {
+        if (placeIdIndex[opts.feature.placeId]) {
+          return { fillColor:c.color, fillOpacity:0.38, strokeColor:c.color, strokeOpacity:0.7, strokeWeight:1 };
+        }
+        return {};
+      };
+    });
+    updateTravelsPanel();
+  }
+
+  function clearGroup(type) {
+    visitedRegions[type].forEach(r => delete placeIdIndex[r.placeId]);
+    visitedRegions[type] = [];
+    saveToStorage();
+    Object.entries(LAYER_CFG).forEach(([t, c]) => {
+      const lyr = featureLayers[t]; if (!lyr) return;
+      lyr.style = opts => {
+        if (placeIdIndex[opts.feature.placeId]) {
+          return { fillColor:c.color, fillOpacity:0.38, strokeColor:c.color, strokeOpacity:0.7, strokeWeight:1 };
+        }
+        return {};
+      };
+    });
+    updateTravelsPanel();
+  }
+
+  /* ======================================================
+     TOAST FEEDBACK
+  ====================================================== */
+  function showToast(label, added) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;border-radius:50px;padding:7px 16px;font-size:12.5px;font-weight:700;font-family:Inter,sans-serif;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.45);transition:transform .55s ease,opacity .55s ease;left:50%;top:40%;transform:translateX(-50%);background:${added?'rgba(61,207,160,.95)':'rgba(216,90,48,.9)'};color:${added?'#062b20':'#fff'}`;
+    el.textContent = (added ? '✓ ' : '✕ ') + label;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transform = 'translateX(-50%) translateY(-40px)'; el.style.opacity = '0'; }));
+    setTimeout(() => el.remove(), 620);
+  }
+
+  /* ======================================================
+     TRAVEL MODE
+  ====================================================== */
+  let travelMode = false;
+  const travelBtn       = document.getElementById('ctrl-travel-mode');
+  const travelIndicator = document.getElementById('travel-mode-indicator');
+  const regionTooltip   = document.getElementById('region-tooltip');
+  const rtName = document.getElementById('rt-name');
+  const rtType = document.getElementById('rt-type');
+  const rtHint = document.getElementById('rt-hint');
+  const noMapIdNotice   = document.getElementById('no-map-id-notice');
+
+  function setTravelMode(on) {
+    travelMode = on;
+    travelBtn.classList.toggle('travel-mode-on', on);
+    travelIndicator.classList.toggle('visible', on);
+    document.getElementById('map-main').classList.toggle('highlight-mode', on);
+    const btn = document.getElementById('panel-travel-mode-btn');
+    const lbl = document.getElementById('panel-travel-mode-label');
+    btn.classList.toggle('on', on); btn.classList.toggle('off', !on);
+    lbl.textContent = on ? 'Disable Highlight Mode' : 'Enable Highlight Mode';
+    if (!on) regionTooltip.classList.remove('visible');
+    noMapIdNotice.classList.toggle('visible', on && !HAS_MAP_ID);
+  }
+
+  travelBtn.addEventListener('click', () => setTravelMode(!travelMode));
+  document.getElementById('panel-travel-mode-btn').addEventListener('click', () => setTravelMode(!travelMode));
+
+  /* ======================================================
+     MAP CONTROLS & STYLE TOGGLE
+  ====================================================== */
+  function setupMapControls() {
+    document.getElementById('ctrl-zoom-in').addEventListener('click', () => map.setZoom(map.getZoom() + 1));
+    document.getElementById('ctrl-zoom-out').addEventListener('click', () => map.setZoom(map.getZoom() - 1));
+    document.getElementById('ctrl-locate').addEventListener('click', () => {
+      navigator.geolocation?.getCurrentPosition(pos => {
+        map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        map.setZoom(10); stopPan();
+      });
+    });
+    document.getElementById('ctrl-fullscreen').addEventListener('click', () => {
       if (!document.fullscreenElement) document.getElementById('map-main').requestFullscreen().catch(()=>{});
       else document.exitFullscreen();
-    }
+    });
+    map.addListener('mousedown', stopPan);
+    map.addListener('touchstart', stopPan);
 
-    let activePanel = null;
-    function openPanel(name) {
-      if (activePanel) document.getElementById('panel-'+activePanel).classList.remove('open');
-      if (activePanel===name) { activePanel=null; return; }
-      activePanel=name;
-      document.getElementById('panel-'+name).classList.add('open');
-    }
-    function closePanel() {
-      if (activePanel) { document.getElementById('panel-'+activePanel).classList.remove('open'); activePanel=null; }
-    }
-    document.addEventListener('keydown', e => { if (e.key==='Escape') closePanel(); });
-    document.querySelectorAll('.action-card').forEach(card =>
-      card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); card.click(); } })
-    );
+    document.querySelectorAll('.map-style-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const style = btn.dataset.style;
+        if (currentMapType === style) return;
+        currentMapType = style;
+        document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const typeMap = { road:'roadmap', satellite:'satellite', terrain:'terrain' };
+        map.setMapTypeId(typeMap[style]);
+        if (!HAS_MAP_ID) map.setOptions({ styles: style === 'satellite' ? [] : DARK_MAP_STYLE });
+      });
+    });
+  }
 
-    function toggleChip(el) { el.classList.toggle('selected'); }
+  /* ======================================================
+     DRAWING SYSTEM
+  ====================================================== */
+  let drawMode = null;
+  let activeShape = null, drawPoints = [], vertexDots = [];
+  let selectedRouteId = null;
+  const ROUTES_KEY = 'pathbloom_routes_v1';
+  let routeStore = [];
+  const DRAW_COLORS = { line:'#7ba8ff', polygon:'#3dcfa0', point:'#D85A30' };
+  const DRAW_MSGS = {
+    line:    'Drawing Route — Click to add points, double-click to finish',
+    polygon: 'Drawing Area — Click to add vertices, double-click to close',
+    point:   'Adding Waypoint — Click anywhere on the map',
+  };
+  const drawModeEl = document.getElementById('draw-mode-indicator');
+  const drawModeText = document.getElementById('draw-mode-text');
 
-    function handleCreateTrip(e) {
-      e.preventDefault();
-      const btn = document.getElementById('create-trip-btn');
-      btn.innerHTML = '<i class="ti ti-check"></i> Trip Created!';
-      btn.style.background = 'linear-gradient(135deg,#1a7a56,#2ab88a)';
-      setTimeout(() => { btn.innerHTML='<i class="ti ti-map-pin-plus"></i> Create Trip &amp; Drop Pin'; btn.style.background=''; closePanel(); }, 2000);
+  function setDrawTool(mode) {
+    if (drawMode === mode) { cancelDraw(); return; }
+    cancelDraw();
+    drawMode = mode;
+    document.querySelectorAll('.draw-tool-btn').forEach(b => b.classList.remove('active-draw'));
+    if (!mode) return;
+    const btnIds = { line:'tool-line', polygon:'tool-polygon', point:'tool-point' };
+    document.getElementById(btnIds[mode])?.classList.add('active-draw');
+    drawModeText.textContent = DRAW_MSGS[mode];
+    drawModeEl.classList.add('visible');
+    map.setOptions({ draggableCursor:'crosshair' });
+    stopPan();
+    if (mode === 'line') {
+      activeShape = new google.maps.Polyline({ map, strokeColor:DRAW_COLORS.line, strokeOpacity:0.9, strokeWeight:3.5, geodesic:true, zIndex:10 });
+    } else if (mode === 'polygon') {
+      activeShape = new google.maps.Polygon({ map, strokeColor:DRAW_COLORS.polygon, strokeOpacity:1, strokeWeight:2.5, fillColor:DRAW_COLORS.polygon, fillOpacity:0.18, geodesic:true, zIndex:10 });
     }
+  }
 
-    let isRotating=true, rotateInterval;
-    function startRotate() {
-      rotateInterval = setInterval(() => {
-        if (!isRotating) return;
-        const c=map.getCenter(); map.setCenter([c.lng+0.08, c.lat]);
-      }, 40);
+  function cancelDraw() {
+    if (activeShape) { activeShape.setMap(null); activeShape = null; }
+    vertexDots.forEach(m => m.setMap(null)); vertexDots = [];
+    drawPoints = []; drawMode = null;
+    drawModeEl.classList.remove('visible');
+    map.setOptions({ draggableCursor:null });
+    document.querySelectorAll('.draw-tool-btn').forEach(b => b.classList.remove('active-draw'));
+  }
+
+  function handleMapClick(latLng) {
+    if (!drawMode) return;
+    if (drawMode === 'point') {
+      const marker = new google.maps.Marker({
+        position:latLng, map,
+        icon:{ path:google.maps.SymbolPath.CIRCLE, scale:9, fillColor:DRAW_COLORS.point, fillOpacity:1, strokeColor:'#062b20', strokeWeight:2.5 },
+        zIndex:150,
+      });
+      const savedMode = drawMode;
+      drawMode = null; drawModeEl.classList.remove('visible');
+      document.getElementById('tool-point')?.classList.remove('active-draw');
+      map.setOptions({ draggableCursor:null });
+      promptName({ type:'Point', gmObject:marker, coords:[[latLng.lng(),latLng.lat()]], dist:null });
+      return;
     }
-    map.on('load', startRotate);
-    map.on('mousedown',  ()=>{ isRotating=false; clearInterval(rotateInterval); });
-    map.on('touchstart', ()=>{ isRotating=false; clearInterval(rotateInterval); });
-    map.on('mouseup',    ()=>setTimeout(()=>{ isRotating=true; startRotate(); }, 4000));
-    map.on('touchend',   ()=>setTimeout(()=>{ isRotating=true; startRotate(); }, 4000));
+    drawPoints.push(latLng);
+    if (activeShape instanceof google.maps.Polyline) activeShape.setPath(drawPoints);
+    else if (activeShape instanceof google.maps.Polygon) activeShape.setPath(drawPoints);
+    const dot = new google.maps.Marker({
+      position:latLng, map,
+      icon:{ path:google.maps.SymbolPath.CIRCLE, scale:4.5, fillColor:drawMode==='line'?DRAW_COLORS.line:DRAW_COLORS.polygon, fillOpacity:1, strokeColor:'#062b20', strokeWeight:1.5 },
+      zIndex:120,
+    });
+    vertexDots.push(dot);
+  }
+
+  function handleMapDblClick(latLng) {
+    if (!drawMode || drawMode === 'point') return;
+    if (drawPoints.length < 2) { cancelDraw(); return; }
+    const type = drawMode === 'line' ? 'LineString' : 'Polygon';
+    const coords = drawPoints.map(p => [p.lng(), p.lat()]);
+    const gmObject = activeShape;
+    vertexDots.forEach(m => m.setMap(null)); vertexDots = [];
+    drawPoints = []; drawMode = null; activeShape = null;
+    drawModeEl.classList.remove('visible');
+    document.querySelectorAll('.draw-tool-btn').forEach(b => b.classList.remove('active-draw'));
+    map.setOptions({ draggableCursor:null });
+    let dist = null;
+    if (window.turf && coords.length >= 2) {
+      try {
+        if (type === 'LineString') dist = turf.length(turf.lineString(coords), { units:'kilometers' });
+        else dist = turf.area(turf.polygon([[...coords, coords[0]]])) / 1e6;
+      } catch(e) {}
+    }
+    promptName({ type, gmObject, coords, dist });
+  }
+
+  function bindDrawListeners() {
+    map.addListener('click', e => { if (drawMode) { e.stop?.(); handleMapClick(e.latLng); } });
+    map.addListener('dblclick', e => { if (drawMode) { e.stop?.(); handleMapDblClick(e.latLng); } });
+  }
+
+  /* ======================================================
+     ROUTE NAME MODAL
+  ====================================================== */
+  let pendingRoute = null;
+
+  function promptName(routeData) {
+    pendingRoute = routeData;
+    const input = document.getElementById('route-name-input');
+    const defaults = { LineString:'My Route', Polygon:'My Area', Point:'My Waypoint' };
+    input.value = defaults[routeData.type] || 'Route';
+    document.getElementById('route-name-modal').classList.add('open');
+    setTimeout(() => { input.select(); input.focus(); }, 100);
+  }
+
+  document.getElementById('btn-save-route-name').addEventListener('click', saveRouteName);
+  document.getElementById('route-name-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveRouteName();
+    if (e.key === 'Escape') cancelRouteName();
+  });
+  document.getElementById('btn-cancel-route-name').addEventListener('click', cancelRouteName);
+
+  function saveRouteName() {
+    if (!pendingRoute) return;
+    const name = document.getElementById('route-name-input').value.trim() || 'Untitled';
+    routeStore.push({ id:Date.now().toString(), name, type:pendingRoute.type, coords:pendingRoute.coords, distance:pendingRoute.dist, gmObject:pendingRoute.gmObject });
+    saveRoutes(); renderRouteList();
+    document.getElementById('route-name-modal').classList.remove('open');
+    pendingRoute = null;
+    showToast(name, true);
+  }
+
+  function cancelRouteName() {
+    if (pendingRoute?.gmObject) pendingRoute.gmObject.setMap(null);
+    pendingRoute = null;
+    document.getElementById('route-name-modal').classList.remove('open');
+  }
+
+  /* ======================================================
+     ROUTE STORAGE
+  ====================================================== */
+  function loadRoutes() {
+    try {
+      const raw = localStorage.getItem(ROUTES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      parsed.forEach(r => {
+        let gmObject = null;
+        try {
+          if (r.type === 'LineString' && r.coords?.length >= 2) {
+            gmObject = new google.maps.Polyline({ map, path:r.coords.map(c=>({lat:c[1],lng:c[0]})), strokeColor:DRAW_COLORS.line, strokeOpacity:0.9, strokeWeight:3.5, geodesic:true, zIndex:10 });
+          } else if (r.type === 'Polygon' && r.coords?.length >= 3) {
+            gmObject = new google.maps.Polygon({ map, paths:r.coords.map(c=>({lat:c[1],lng:c[0]})), strokeColor:DRAW_COLORS.polygon, strokeOpacity:1, strokeWeight:2.5, fillColor:DRAW_COLORS.polygon, fillOpacity:0.18, geodesic:true, zIndex:10 });
+          } else if (r.type === 'Point' && r.coords?.length >= 1) {
+            gmObject = new google.maps.Marker({ position:{lat:r.coords[0][1],lng:r.coords[0][0]}, map, icon:{path:google.maps.SymbolPath.CIRCLE,scale:9,fillColor:DRAW_COLORS.point,fillOpacity:1,strokeColor:'#062b20',strokeWeight:2.5}, zIndex:150 });
+          }
+        } catch(e) {}
+        routeStore.push({ ...r, gmObject });
+      });
+    } catch(e) {}
+  }
+
+  function saveRoutes() {
+    try {
+      localStorage.setItem(ROUTES_KEY, JSON.stringify(routeStore.map(r => ({ id:r.id, name:r.name, type:r.type, coords:r.coords, distance:r.distance }))));
+    } catch(e) {}
+  }
+
+  function restoreDrawnRoutes() { loadRoutes(); renderRouteList(); }
+
+  /* ======================================================
+     ROUTE LIST UI
+  ====================================================== */
+  function fmtMeta(type, dist) {
+    if (type === 'Point') return 'Waypoint';
+    if (type === 'LineString') { if (dist == null) return 'Route'; return dist >= 1 ? `${dist.toFixed(1)} km` : `${(dist*1000).toFixed(0)} m`; }
+    if (type === 'Polygon')   { if (dist == null) return 'Area';  return dist >= 1 ? `${dist.toFixed(2)} km²` : `${(dist*1e6).toFixed(0)} m²`; }
+    return '';
+  }
+  function tyIcon(type) {
+    if (type === 'LineString') return { cls:'line',    icon:'ti-route' };
+    if (type === 'Polygon')   return { cls:'polygon', icon:'ti-polygon' };
+    return { cls:'point', icon:'ti-map-pin' };
+  }
+
+  function renderRouteList() {
+    const c = document.getElementById('route-list-container');
+    const empty = document.getElementById('route-list-empty');
+    c.querySelectorAll('.route-item').forEach(el => el.remove());
+    if (!routeStore.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    routeStore.forEach(r => {
+      const ti = tyIcon(r.type);
+      const row = document.createElement('div');
+      row.className = 'route-item' + (r.id === selectedRouteId ? ' selected' : '');
+      row.dataset.id = r.id;
+      row.innerHTML = `<div class="route-type-icon ${ti.cls}"><i class="ti ${ti.icon}"></i></div><div class="route-item-info"><div class="route-item-name" title="${r.name}">${r.name}</div><div class="route-item-meta">${fmtMeta(r.type,r.distance)}</div></div><button class="route-item-del" data-id="${r.id}" aria-label="Delete ${r.name}"><i class="ti ti-x"></i></button>`;
+      row.addEventListener('click', e => {
+        if (e.target.closest('.route-item-del')) return;
+        selectedRouteId = r.id; renderRouteList();
+        if (r.coords?.length) {
+          const b = new google.maps.LatLngBounds();
+          r.coords.forEach(c => b.extend({lat:c[1],lng:c[0]}));
+          map.fitBounds(b, 60);
+        }
+      });
+      c.appendChild(row);
+    });
+    c.querySelectorAll('.route-item-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const r = routeStore.find(x => x.id === id);
+        if (r?.gmObject) r.gmObject.setMap(null);
+        routeStore = routeStore.filter(x => x.id !== id);
+        if (selectedRouteId === id) selectedRouteId = null;
+        saveRoutes(); renderRouteList();
+      });
+    });
+  }
+
+  /* ======================================================
+     DRAW TOOL BUTTONS
+  ====================================================== */
+  document.getElementById('tool-line').addEventListener('click',    () => setDrawTool(drawMode==='line'?null:'line'));
+  document.getElementById('tool-polygon').addEventListener('click', () => setDrawTool(drawMode==='polygon'?null:'polygon'));
+  document.getElementById('tool-point').addEventListener('click',   () => setDrawTool(drawMode==='point'?null:'point'));
+  document.getElementById('tool-delete').addEventListener('click',  () => {
+    if (selectedRouteId) {
+      const r = routeStore.find(x => x.id === selectedRouteId);
+      if (r?.gmObject) r.gmObject.setMap(null);
+      routeStore = routeStore.filter(x => x.id !== selectedRouteId);
+      selectedRouteId = null; saveRoutes(); renderRouteList();
+    } else {
+      const btn = document.getElementById('tool-delete');
+      btn.style.borderColor = 'rgba(216,90,48,.6)'; btn.style.color = 'var(--orange)';
+      setTimeout(() => { btn.style.borderColor=''; btn.style.color=''; }, 800);
+    }
+  });
+  document.getElementById('clear-all-routes').addEventListener('click', () => {
+    routeStore.forEach(r => { if (r.gmObject) r.gmObject.setMap(null); });
+    routeStore = []; selectedRouteId = null;
+    saveRoutes(); renderRouteList(); cancelDraw();
+  });
+
+  /* ======================================================
+     TRAVELS PANEL
+  ====================================================== */
+  function updateTravelsPanel() {
+    const cc = visitedRegions.countries.length;
+    const ss = visitedRegions.states.length;
+    const dd = visitedRegions.districts.length;
+    const set = (id,v) => { const e=document.getElementById(id); if(e)e.textContent=v; };
+    set('stat-countries',cc); set('stat-countries-bar',cc);
+    set('stat-states',ss);    set('stat-states-bar',ss);
+    set('stat-districts',dd); set('travels-pill',cc+ss+dd);
+    renderRegionList('list-countries', visitedRegions.countries, 'countries', 'country');
+    renderRegionList('list-states',    visitedRegions.states,    'states',    'state');
+    renderRegionList('list-districts', visitedRegions.districts, 'districts', 'district');
+  }
+
+  function renderRegionList(cid, items, type, dotClass) {
+    const c = document.getElementById(cid); if (!c) return;
+    if (!items.length) { c.innerHTML = '<div class="region-empty">None marked yet</div>'; return; }
+    c.innerHTML = '';
+    items.forEach(({ placeId, name }) => {
+      const row = document.createElement('div');
+      row.className = 'region-row';
+      row.innerHTML = `<span class="rr-dot ${dotClass}"></span><span class="rr-name" title="${name}">${name}</span><button class="rr-remove" data-pid="${placeId}" data-type="${type}" aria-label="Remove ${name}"><i class="ti ti-x"></i></button>`;
+      c.appendChild(row);
+    });
+    c.querySelectorAll('.rr-remove').forEach(btn => btn.addEventListener('click', () => removeRegion(btn.dataset.type, btn.dataset.pid)));
+  }
+
+  document.getElementById('clear-countries').addEventListener('click',  () => clearGroup('countries'));
+  document.getElementById('clear-states').addEventListener('click',     () => clearGroup('states'));
+  document.getElementById('clear-districts').addEventListener('click',  () => clearGroup('districts'));
+
+  /* ======================================================
+     PANEL MANAGEMENT
+  ====================================================== */
+  let activePanel = null;
+  function openPanel(name) {
+    if (activePanel) document.getElementById('panel-'+activePanel).classList.remove('open');
+    if (activePanel === name) { activePanel = null; return; }
+    activePanel = name;
+    const panel = document.getElementById('panel-'+name);
+    panel.classList.add('open');
+    if (name === 'travels') updateTravelsPanel();
+    if (name === 'route')   renderRouteList();
+    const first = panel.querySelector('button,[href],input,textarea,[tabindex]:not([tabindex="-1"])');
+    if (first) first.focus();
+  }
+  function closePanel() {
+    if (activePanel) { document.getElementById('panel-'+activePanel).classList.remove('open'); activePanel = null; }
+  }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-panel]');
+    if (t) { openPanel(t.dataset.panel); return; }
+    if (e.target.closest('.panel-close')) closePanel();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closePanel(); cancelDraw(); return; }
+    const card = e.target.closest('.action-card[data-panel]');
+    if (card && (e.key==='Enter'||e.key===' ')) { e.preventDefault(); openPanel(card.dataset.panel); }
+  });
+
+  /* ======================================================
+     CHIP TOGGLE
+  ====================================================== */
+  document.querySelectorAll('.chip').forEach(chip => {
+    const toggle = () => {
+      const on = chip.getAttribute('aria-checked') !== 'true';
+      chip.classList.toggle('selected', on);
+      chip.setAttribute('aria-checked', String(on));
+    };
+    chip.addEventListener('click', toggle);
+    chip.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); toggle(); } });
+  });
+
+  /* ======================================================
+     NEW TRIP FORM
+  ====================================================== */
+  document.getElementById('new-trip-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = document.getElementById('create-trip-btn');
+    btn.innerHTML = '<i class="ti ti-check"></i> Trip Created!';
+    btn.style.background = 'linear-gradient(135deg,#1a7a56,#2ab88a)';
+    setTimeout(() => { btn.innerHTML='<i class="ti ti-map-pin-plus"></i> Create Trip &amp; Drop Pin'; btn.style.background=''; closePanel(); }, 2000);
+  });
+  </script>
+
+  <!--
+    Load Google Maps API — Replace YOUR_GOOGLE_MAPS_API_KEY with your real key.
+    Get one free at: https://console.cloud.google.com
+    Required APIs: Maps JavaScript API, Places API
+  -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places,geometry&v=weekly&callback=initMap">
   </script>
 </body>
 </html>
-
