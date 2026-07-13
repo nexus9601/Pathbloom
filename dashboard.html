@@ -1673,6 +1673,36 @@
     else { map.setCenter(result.geometry.location); map.setZoom(5); }
   }
 
+  function clearSpotlight() {
+    spotlightCountry = null;
+    spotlightState   = null;
+    spotlightPlaceId = null;
+    // Hide overlay with animation
+    spotlightOverlay.style.background = 'rgba(2,4,8,0.94)';
+    spotlightOverlay.style.opacity = '0';
+    // Reset feature layers to normal visited-region styling
+    Object.entries(LAYER_CFG).forEach(([t, c]) => {
+      const lyr = featureLayers[t]; if (!lyr) return;
+      try {
+        lyr.style = opts => {
+          if (placeIdIndex[opts.feature.placeId]) {
+            return { fillColor:c.color, fillOpacity:0.38, strokeColor:c.color, strokeOpacity:0.7, strokeWeight:1 };
+          }
+          return {};
+        };
+      } catch(e) {}
+    });
+    // Hide spotlight bar
+    document.getElementById('re-spotlight-bar').style.display = 'none';
+    // Re-render lists clean
+    renderCountries(document.getElementById('re-country-search').value);
+    document.getElementById('re-state-list').innerHTML =
+      '<div class="re-state-placeholder" id="re-state-placeholder">' +
+      '<i class="ti ti-map-pin-off"></i>' +
+      '<span>Select a country above to<br>browse its states &amp; provinces</span>' +
+      '</div>';
+  }
+
   function selectCountry(name) {
     const country = COUNTRIES.find(c => c.name === name);
     if (!country) return;
