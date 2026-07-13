@@ -1566,93 +1566,67 @@
 
   /* -------------------------------------------------------
      SPOTLIGHT IMPLEMENTATION
-     Uses Places Service (already loaded) for geocoding,
-     and a DIV overlay mask for the visual effect.
-     No Geocoding API or FeatureLayer required.
+     Uses Nominatim (OpenStreetMap, completely free) for
+     geocoding bounds. No API key or billing needed.
+     Visual effect: CSS radial-gradient overlay.
   ------------------------------------------------------- */
 
-  // Create a full-cover dark overlay div inside map-main
+  // Full-cover dark overlay inside the globe shell
   const spotlightOverlay = document.createElement('div');
   spotlightOverlay.id = 're-map-overlay';
   spotlightOverlay.style.cssText = [
-    'position:absolute', 'inset:0', 'z-index:5', 'pointer-events:none',
-    'background:rgba(2,4,8,0.94)', 'opacity:0',
+    'position:absolute','inset:0','z-index:5','pointer-events:none',
+    'background:rgba(2,4,8,0.94)','opacity:0',
     'transition:opacity .5s cubic-bezier(.4,0,.2,1)',
     'border-radius:inherit',
   ].join(';');
   document.getElementById('globe-shell').appendChild(spotlightOverlay);
 
-  // Punch-hole SVG that cuts out the selected region shape
-  // For now we use a simple vignette overlay with the selected region
-  // highlighted using map's own fitBounds + overlay fade
-  let placesService = null;
-  function getPlacesService() {
-    if (!placesService) {
-      placesService = new google.maps.places.PlacesService(map);
+  // Free geocoding via Nominatim (OpenStreetMap) — no API key required
+  async function nominatimGeocode(query) {
+    const url = 'https://nominatim.openstreetmap.org/search?q='
+      + encodeURIComponent(query)
+      + '&format=json&addressdetails=0&limit=1';
+    try {
+      const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      const data = await r.json();
+      return (data && data.length > 0) ? data[0] : null;
+    } catch(e) {
+      console.warn('[RE] Nominatim error:', e.message);
+      return null;
     }
-    return placesService;
   }
 
   function applySpotlight(query, type) {
     stopPan();
-    // Show dark overlay immediately
+    // Immediately show the dark overlay
+    spotlightOverlay.style.background = 'rgba(2,4,8,0.94)';
     spotlightOverlay.style.opacity = '1';
 
-    // Use PlacesService.textSearch to find region bounds (no Geocoding API needed)
-    const request = {
-      query: query + (type === 'state' ? '' : ''),
-      fields: ['geometry', 'name'],
-    };
-    getPlacesService().textSearch(request, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results[0]?.geometry) {
-        const geo = results[0].geometry;
-        if (geo.viewport) {
-          map.fitBounds(geo.viewport);
-        } else {
-          map.setCenter(geo.location);
-          map.setZoom(type === 'country' ? 5 : 7);
-        }
-        // Now reveal a spotlight window by cutting a hole in the overlay
-        // We use a CSS mask to punch a transparent hole in the center
-        // proportional to the region's viewport on screen
-        google.maps.event.addListenerOnce(map, 'idle', () => {
-          punchSpotlightHole();
-        });
+    nominatimGeocode(query).then(result => {
+      if (result && result.boundingbox) {
+        const bb = result.boundingbox; // [south, north, west, east]
+        const bounds = new google.maps.LatLngBounds(
+          new google.maps.LatLng(parseFloat(bb[0]), parseFloat(bb[2])),
+          new google.maps.LatLng(parseFloat(bb[1]), parseFloat(bb[3]))
+        );
+        map.fitBounds(bounds, 60);
+        google.maps.event.addListenerOnce(map, 'idle', punchSpotlightHole);
       } else {
-        // Fallback: just show overlay with no zoom
-        console.warn('[RE] PlacesService failed for:', query, status);
+        punchSpotlightHole(); // Still show dark frame even if geocode fails
       }
     });
-
-    // Also try FeatureLayer approach if available
-    if (HAS_MAP_ID && Object.keys(featureLayers).length > 0) {
-      const layerKey = type === 'country' ? 'countries' : 'states';
-      const lyr = featureLayers[layerKey];
-      const gc = getGeocoder();
-      if (lyr && gc) {
-        gc.geocode({ address: query }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const pid = results[0].place_id;
-            applyFeatureLayerSpotlight(lyr, pid, LAYER_CFG[layerKey], type);
-          }
-        });
-      }
-    }
   }
 
   function punchSpotlightHole() {
-    // Use a radial gradient mask: transparent in center (shows map), dark at edges
-    // The "hole" starts small and covers most of the globe except the focused region
-    spotlightOverlay.style.background = 'transparent';
+    // Transparent center window + dark vignette at edges
     spotlightOverlay.style.background = [
-      'radial-gradient(ellipse 60% 55% at 50% 48%,',
+      'radial-gradient(ellipse 58% 52% at 50% 50%,',
         'transparent 0%,',
-        'transparent 35%,',
-        'rgba(2,4,8,0.3) 55%,',
-        'rgba(2,4,8,0.97) 75%',
-      ')',
+        'transparent 38%,',
+        'rgba(2,4,8,0.4) 60%,',
+        'rgba(2,4,8,0.97) 80%)',
     ].join('');
-    spotlightOverlay.style.opacity = '1';
   }
   function applyFeatureLayerSpotlight(lyr, placeId, cfg, type) {
     try {
