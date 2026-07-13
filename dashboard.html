@@ -81,19 +81,31 @@
     .action-card:nth-child(2) { animation-delay: .12s; }
     .action-card:nth-child(3) { animation-delay: .19s; }
     .action-card:nth-child(4) { animation-delay: .26s; }
+    /* Hover background layer */
     .action-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity .3s; }
-    .action-card.new-trip      { background: linear-gradient(135deg,#1a4a38,#1e5c45); border-color: rgba(61,207,160,.25); box-shadow: 0 4px 20px rgba(61,207,160,.10),inset 0 1px 0 rgba(255,255,255,.06); }
-    .action-card.new-trip::before { background: radial-gradient(ellipse at top left,rgba(61,207,160,.15) 0%,transparent 65%); }
-    .action-card.new-trip:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,207,160,.22); border-color: rgba(61,207,160,.40); }
-    .action-card.highlights    { background: linear-gradient(135deg,#3a1c10,#4a2415); border-color: rgba(216,90,48,.22); box-shadow: 0 4px 20px rgba(216,90,48,.08),inset 0 1px 0 rgba(255,255,255,.04); }
-    .action-card.highlights::before { background: radial-gradient(ellipse at top left,rgba(216,90,48,.15) 0%,transparent 65%); }
-    .action-card.highlights:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(216,90,48,.18); border-color: rgba(216,90,48,.38); }
-    .action-card.group         { background: linear-gradient(135deg,#131e3a,#1a2850); border-color: var(--blue-border); box-shadow: 0 4px 20px rgba(100,150,255,.08),inset 0 1px 0 rgba(255,255,255,.04); }
-    .action-card.group::before { background: radial-gradient(ellipse at top left,rgba(100,150,255,.15) 0%,transparent 65%); }
-    .action-card.group:hover   { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(100,150,255,.18); border-color: rgba(100,150,255,.35); }
-    .action-card.route-action-card { background: linear-gradient(135deg,#1a1040,#231562); border-color: rgba(123,168,255,.22); box-shadow: 0 4px 20px rgba(123,168,255,.08),inset 0 1px 0 rgba(255,255,255,.04); }
-    .action-card.route-action-card::before { background: radial-gradient(ellipse at top left,rgba(123,168,255,.15) 0%,transparent 65%); }
-    .action-card.route-action-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(123,168,255,.18); border-color: rgba(123,168,255,.35); }
+    /* Active indicator line */
+    .action-card::after { content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 4px; border-radius: 0 4px 4px 0; background: currentColor; opacity: 0; transform: scaleY(0); transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s; z-index: 2; }
+    
+    .action-card.new-trip      { background: linear-gradient(135deg,rgba(26,74,56,.7),rgba(30,92,69,.7)); border-color: rgba(61,207,160,.15); box-shadow: 0 4px 20px rgba(61,207,160,.05),inset 0 1px 0 rgba(255,255,255,.03); color: var(--green); }
+    .action-card.new-trip::before { background: radial-gradient(ellipse at top left,rgba(61,207,160,.25) 0%,transparent 70%); }
+    .action-card.new-trip:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(61,207,160,.35); border-color: rgba(61,207,160,.5); }
+    .action-card.new-trip:hover::after { opacity: 1; transform: scaleY(1); }
+    
+    .action-card.highlights    { background: linear-gradient(135deg,rgba(58,28,16,.7),rgba(74,36,21,.7)); border-color: rgba(216,90,48,.15); box-shadow: 0 4px 20px rgba(216,90,48,.05),inset 0 1px 0 rgba(255,255,255,.03); color: var(--orange); }
+    .action-card.highlights::before { background: radial-gradient(ellipse at top left,rgba(216,90,48,.25) 0%,transparent 70%); }
+    .action-card.highlights:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(216,90,48,.35); border-color: rgba(216,90,48,.5); }
+    .action-card.highlights:hover::after { opacity: 1; transform: scaleY(1); }
+    
+    .action-card.group         { background: linear-gradient(135deg,rgba(19,30,58,.7),rgba(26,40,80,.7)); border-color: rgba(100,150,255,.15); box-shadow: 0 4px 20px rgba(100,150,255,.05),inset 0 1px 0 rgba(255,255,255,.03); color: var(--blue); }
+    .action-card.group::before { background: radial-gradient(ellipse at top left,rgba(100,150,255,.25) 0%,transparent 70%); }
+    .action-card.group:hover   { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(100,150,255,.35); border-color: rgba(100,150,255,.5); }
+    .action-card.group:hover::after { opacity: 1; transform: scaleY(1); }
+    
+    .action-card.route-action-card { background: linear-gradient(135deg,rgba(26,16,64,.7),rgba(35,21,98,.7)); border-color: rgba(123,168,255,.15); box-shadow: 0 4px 20px rgba(123,168,255,.05),inset 0 1px 0 rgba(255,255,255,.03); color: #a4bdf5; }
+    .action-card.route-action-card::before { background: radial-gradient(ellipse at top left,rgba(123,168,255,.25) 0%,transparent 70%); }
+    .action-card.route-action-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(123,168,255,.35); border-color: rgba(123,168,255,.5); }
+    .action-card.route-action-card:hover::after { opacity: 1; transform: scaleY(1); }
+    
     .action-card:hover::before { opacity: 1; }
     .action-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; position: relative; z-index: 1; }
     .new-trip .action-icon   { background: rgba(61,207,160,.18);  color: var(--green);  border: 1px solid rgba(61,207,160,.25); }
@@ -151,14 +163,14 @@
       border-radius: 50%;
       overflow: hidden;
       z-index: 1;
-      /* Outer atmosphere ring */
+      /* Outer atmosphere ring and deeper inner shadow for 3D effect */
       box-shadow:
         0 0 0 2px rgba(61,207,160,.22),
         0 0 40px 8px  rgba(61,207,160,.18),
         0 0 80px 20px rgba(61,207,160,.08),
         0 0 140px 40px rgba(61,207,160,.04),
         0 30px 80px rgba(0,0,0,.7),
-        inset 0 0 60px rgba(0,0,0,.35);
+        inset 0 0 120px rgba(0,0,0,.6);
     }
     #map { width: 100%; height: 100%; }
     /* Sphere specular highlight (top-left bright spot) */
@@ -176,8 +188,8 @@
       position: absolute; inset: 0; z-index: 21; pointer-events: none; border-radius: 50%;
       background: radial-gradient(ellipse at 50% 50%,
         transparent 55%,
-        rgba(0,0,0,.30) 75%,
-        rgba(0,0,0,.70) 100%);
+        rgba(0,0,0,.45) 75%,
+        rgba(0,0,0,.85) 100%);
     }
     /* SVG lat/lng grid overlay */
     .globe-grid {
@@ -191,12 +203,12 @@
     .gm-style .gm-style-iw-d { overflow: auto !important; }
     .gm-style .gm-ui-hover-effect { display: none !important; }
     .gm-style .gm-style-iw-t::after { background: linear-gradient(45deg,rgba(9,21,16,.97) 50%,transparent 51%) !important; box-shadow: -2px 2px 2px 0 rgba(93,202,165,.1) !important; }
-    .map-style-toggle { position: absolute; top: 16px; left: 16px; display: flex; gap: 6px; z-index: 10; }
-    .map-style-btn { padding: 7px 14px; border-radius: 50px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); color: var(--text-dim); font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter',sans-serif; transition: background var(--ease),color var(--ease),border-color var(--ease); }
-    .map-style-btn.active, .map-style-btn:hover { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
-    .map-controls { position: absolute; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
-    .map-ctrl-btn { width: 38px; height: 38px; background: rgba(9,21,16,.88); border: 1px solid var(--border); backdrop-filter: blur(14px); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 17px; cursor: pointer; transition: background var(--ease),color var(--ease),border-color var(--ease); }
-    .map-ctrl-btn:hover { background: var(--green-dim); color: var(--green); border-color: var(--border2); }
+    .map-style-toggle { position: absolute; top: 20px; left: 20px; display: flex; z-index: 10; background: rgba(15,25,35,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .map-style-btn { padding: 6px 16px; border-radius: 50px; background: transparent; border: none; color: var(--text-dim); font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter',sans-serif; transition: background var(--ease),color var(--ease),box-shadow var(--ease); }
+    .map-style-btn.active, .map-style-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .map-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+    .map-ctrl-btn { width: 42px; height: 42px; background: rgba(15,25,35,0.7); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 18px; cursor: pointer; transition: background var(--ease),color var(--ease),transform var(--ease),box-shadow var(--ease); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .map-ctrl-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
     .map-ctrl-btn.travel-mode-on { background: var(--green) !important; color: #062b20 !important; border-color: var(--green) !important; box-shadow: 0 0 0 3px var(--green-glow); }
     .map-stats { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; background: rgba(9,21,16,.90); border: 1px solid var(--border); backdrop-filter: blur(18px); border-radius: 18px; padding: 10px 6px; z-index: 10; white-space: nowrap; }
     .map-stat-item { display: flex; align-items: center; gap: 9px; padding: 4px 18px; }
@@ -236,18 +248,61 @@
     .panel-close:hover { background: var(--surface3); color: var(--text); }
     .form-group { margin-bottom: 16px; }
     .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 7px; }
-    .form-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 14px; font-size: 14px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color var(--ease),background var(--ease); }
+    .form-input { width: 100%; background: var(--surface2); border: none; border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; padding: 13px 14px; font-size: 14.5px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color var(--ease),background var(--ease), box-shadow var(--ease); }
     .form-input::placeholder { color: var(--text-mute); }
-    .form-input:focus { border-color: var(--border2); background: var(--surface2); }
+    .form-input:focus { border-color: var(--green); background: var(--surface3); box-shadow: 0 4px 15px rgba(61,207,160,.1) inset; }
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { padding: 6px 14px; border-radius: 50px; background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); font-size: 12.5px; cursor: pointer; transition: background var(--ease),color var(--ease),border-color var(--ease); user-select: none; }
-    .chip:hover, .chip.selected { background: var(--green-dim); border-color: var(--border2); color: var(--green); }
+    .chip { padding: 6px 14px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); font-size: 12.5px; cursor: pointer; transition: all .3s cubic-bezier(.4,0,.2,1); user-select: none; }
+    .chip:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .chip.selected { background: linear-gradient(135deg, rgba(61,207,160,0.15), rgba(61,207,160,0.25)); color: var(--green); border-color: rgba(61,207,160,0.5); box-shadow: 0 4px 15px rgba(61,207,160,0.2); font-weight: 600; }
     .btn-create { width: 100%; padding: 13px; margin-top: 8px; background: linear-gradient(135deg,#2db88a,#3dcfa0); border: none; border-radius: 14px; font-size: 14.5px; font-weight: 700; font-family: 'Outfit',sans-serif; color: #062b20; cursor: pointer; box-shadow: 0 4px 20px rgba(61,207,160,.28); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s,box-shadow var(--ease); }
     .btn-create:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(61,207,160,.40); }
     .highlight-grid { display: flex; flex-direction: column; gap: 12px; }
     .highlight-card { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: background var(--ease),border-color var(--ease),transform var(--ease); }
     .highlight-card:hover { background: var(--surface2); border-color: var(--border2); transform: translateX(3px); }
+
+    /* REGION EXPLORER */
+    .action-card.region-explorer { background: linear-gradient(135deg,rgba(20,14,55,.7),rgba(30,20,80,.7)); border-color: rgba(160,100,255,.15); box-shadow: 0 4px 20px rgba(160,100,255,.05),inset 0 1px 0 rgba(255,255,255,.03); color: #b88aff; }
+    .action-card.region-explorer::before { background: radial-gradient(ellipse at top left,rgba(160,100,255,.25) 0%,transparent 70%); }
+    .action-card.region-explorer:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(160,100,255,.35); border-color: rgba(160,100,255,.5); }
+    .action-card.region-explorer:hover::after { opacity: 1; transform: scaleY(1); }
+    .action-card.region-explorer .action-icon { background: rgba(160,100,255,.18); color: #b88aff; border: 1px solid rgba(160,100,255,.25); }
+
+    .re-search-box { position: relative; margin-bottom: 12px; }
+    .re-search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-mute); font-size: 15px; pointer-events: none; }
+    .re-search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 12px 10px 36px; font-size: 13.5px; font-family: 'Inter',sans-serif; color: var(--text); outline: none; transition: border-color .2s, background .2s; }
+    .re-search-input::placeholder { color: var(--text-mute); }
+    .re-search-input:focus { border-color: rgba(160,100,255,.5); background: rgba(255,255,255,0.08); box-shadow: 0 0 0 3px rgba(160,100,255,.12); }
+
+    .re-section-label { font-size: 10px; font-weight: 700; color: var(--text-mute); letter-spacing: 1.6px; text-transform: uppercase; margin-bottom: 8px; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; }
+    .re-clear-btn { font-size: 10px; color: var(--text-mute); cursor: pointer; padding: 2px 8px; border-radius: 4px; transition: color .2s, background .2s; }
+    .re-clear-btn:hover { color: var(--orange); background: var(--orange-dim); }
+
+    .re-list { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; margin-bottom: 14px; }
+    .re-list::-webkit-scrollbar { width: 3px; }
+    .re-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .re-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; transition: background .15s, border-color .15s; border: 1px solid transparent; color: var(--text-dim); font-size: 13.5px; font-weight: 500; }
+    .re-item:hover { background: rgba(160,100,255,.1); border-color: rgba(160,100,255,.25); color: var(--text); }
+    .re-item.selected { background: rgba(160,100,255,.18); border-color: rgba(160,100,255,.5); color: #d8b8ff; font-weight: 600; }
+    .re-item .re-flag { font-size: 18px; line-height: 1; }
+    .re-item .re-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .re-item .re-check { font-size: 14px; color: #b88aff; opacity: 0; transition: opacity .15s; }
+    .re-item.selected .re-check { opacity: 1; }
+
+    .re-state-placeholder { font-size: 12.5px; color: var(--text-mute); text-align: center; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .re-state-placeholder i { font-size: 28px; }
+
+    .re-spotlight-bar { background: rgba(160,100,255,.12); border: 1px solid rgba(160,100,255,.3); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; animation: fade-up .3s ease; }
+    .re-spotlight-bar i { color: #b88aff; font-size: 18px; flex-shrink: 0; }
+    .re-spotlight-bar .re-sb-text { flex: 1; font-size: 12px; color: #d8b8ff; line-height: 1.4; }
+    .re-spotlight-bar .re-sb-text strong { display: block; font-size: 13.5px; font-family: 'Outfit',sans-serif; }
+    .re-spotlight-bar .re-sb-clear { background: rgba(216,90,48,.15); border: 1px solid rgba(216,90,48,.3); color: var(--orange); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .re-spotlight-bar .re-sb-clear:hover { background: rgba(216,90,48,.28); }
+
+    .re-spinner { display: flex; justify-content: center; padding: 14px 0; }
+    .re-spinner::after { content: ''; width: 22px; height: 22px; border: 2px solid rgba(160,100,255,.2); border-top-color: #b88aff; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .hl-thumb { width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; }
     .hl-info { flex: 1; min-width: 0; }
     .hl-name { font-family: 'Outfit',sans-serif; font-size: 14.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -299,7 +354,12 @@
     .draw-tool-btn i { font-size: 22px; }
     .draw-tool-btn:hover { background: rgba(123,168,255,.10); border-color: rgba(123,168,255,.3); color: var(--blue); }
     .draw-tool-btn.danger:hover { background: var(--orange-dim); border-color: rgba(216,90,48,.3); color: var(--orange); }
-    .draw-tool-btn.active-draw { background: linear-gradient(135deg,rgba(123,168,255,.22),rgba(80,130,255,.12)); border-color: rgba(123,168,255,.55); color: var(--blue); box-shadow: 0 0 0 2px rgba(123,168,255,.15); }
+    @keyframes pulse-btn {
+      0% { box-shadow: 0 0 0 0 rgba(123,168,255,0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(123,168,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(123,168,255,0); }
+    }
+    .draw-tool-btn.active-draw { background: linear-gradient(135deg,rgba(123,168,255,.22),rgba(80,130,255,.12)); border-color: rgba(123,168,255,.55); color: var(--blue); animation: pulse-btn 1.5s infinite; }
     .route-list-hdr { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
     .route-list-hdr span { font-size: 11px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 1.4px; }
     .route-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
@@ -408,6 +468,13 @@
           <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
         </div>
 
+        <div class="action-card region-explorer" id="btn-region-explorer" role="listitem" tabindex="0"
+             aria-label="Explore countries and states" data-panel="region-explorer">
+          <div class="action-icon" aria-hidden="true"><i class="ti ti-globe-search"></i></div>
+          <div class="action-text"><strong>Region Explorer</strong><span>Spotlight a country or state</span></div>
+          <i class="ti ti-chevron-right action-arrow" aria-hidden="true"></i>
+        </div>
+
       </div>
 
       <div class="sidebar-divider" role="separator"></div>
@@ -441,19 +508,19 @@
         <!-- Lat/lng grid lines SVG overlay -->
         <svg class="globe-grid" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <!-- Equator & parallels -->
-          <ellipse cx="200" cy="200" rx="199" ry="46" fill="none" stroke="rgba(61,207,160,.5)" stroke-width="0.7"/>
-          <ellipse cx="200" cy="148" rx="172" ry="34" fill="none" stroke="rgba(61,207,160,.35)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="252" rx="172" ry="34" fill="none" stroke="rgba(61,207,160,.35)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="104" rx="122" ry="22" fill="none" stroke="rgba(61,207,160,.22)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="296" rx="122" ry="22" fill="none" stroke="rgba(61,207,160,.22)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="64"  rx="62"  ry="12" fill="none" stroke="rgba(61,207,160,.15)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="336" rx="62"  ry="12" fill="none" stroke="rgba(61,207,160,.15)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="200" rx="199" ry="46" fill="none" stroke="rgba(170,200,255,.3)" stroke-width="0.7"/>
+          <ellipse cx="200" cy="148" rx="172" ry="34" fill="none" stroke="rgba(170,200,255,.2)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="252" rx="172" ry="34" fill="none" stroke="rgba(170,200,255,.2)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="104" rx="122" ry="22" fill="none" stroke="rgba(170,200,255,.15)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="296" rx="122" ry="22" fill="none" stroke="rgba(170,200,255,.15)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="64"  rx="62"  ry="12" fill="none" stroke="rgba(170,200,255,.1)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="336" rx="62"  ry="12" fill="none" stroke="rgba(170,200,255,.1)" stroke-width="0.5"/>
           <!-- Prime meridian & longitude lines -->
-          <ellipse cx="200" cy="200" rx="199" ry="199" fill="none" stroke="rgba(61,207,160,.4)" stroke-width="0.7"/>
-          <ellipse cx="200" cy="200" rx="105" ry="199" fill="none" stroke="rgba(61,207,160,.28)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="200" rx="54"  ry="199" fill="none" stroke="rgba(61,207,160,.20)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="200" rx="160" ry="199" fill="none" stroke="rgba(61,207,160,.20)" stroke-width="0.5"/>
-          <ellipse cx="200" cy="200" rx="18"  ry="199" fill="none" stroke="rgba(61,207,160,.12)" stroke-width="0.4"/>
+          <ellipse cx="200" cy="200" rx="199" ry="199" fill="none" stroke="rgba(170,200,255,.25)" stroke-width="0.7"/>
+          <ellipse cx="200" cy="200" rx="105" ry="199" fill="none" stroke="rgba(170,200,255,.18)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="200" rx="54"  ry="199" fill="none" stroke="rgba(170,200,255,.12)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="200" rx="160" ry="199" fill="none" stroke="rgba(170,200,255,.12)" stroke-width="0.5"/>
+          <ellipse cx="200" cy="200" rx="18"  ry="199" fill="none" stroke="rgba(170,200,255,.08)" stroke-width="0.4"/>
         </svg>
         <div id="map" aria-label="Google Maps travel map"></div>
       </div>
@@ -553,10 +620,10 @@
         </div>
         <p style="font-size:13px;color:var(--text-mute);margin-bottom:18px;">Your most-loved moments and places.</p>
         <div class="highlight-grid" role="list">
-          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F338;</div><div class="hl-info"><div class="hl-name">Philosopher's Path, Kyoto</div><div class="hl-meta">Apr 2024 &middot; Japan Cherry Blossom</div></div><span class="hl-badge green">Top Pick</span></div>
-          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(216,90,48,0.12)">&#x1F30A;</div><div class="hl-info"><div class="hl-name">Kuta Beach Sunrise</div><div class="hl-meta">Mar 2024 &middot; Bali Retreat</div></div><span class="hl-badge orange">Favourite</span></div>
-          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(100,150,255,0.12)">&#x1F30B;</div><div class="hl-info"><div class="hl-name">Snaefellsjokull Glacier</div><div class="hl-meta">Jan 2024 &middot; Iceland Road Trip</div></div><span class="hl-badge green">Top Pick</span></div>
-          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:rgba(61,207,160,0.12)">&#x1F377;</div><div class="hl-info"><div class="hl-name">LX Factory, Lisbon</div><div class="hl-meta">Nov 2023 &middot; Lisbon &amp; Porto</div></div><span class="hl-badge green">Top Pick</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:linear-gradient(135deg,rgba(61,207,160,0.15),rgba(61,207,160,0.25)); border: 1px solid rgba(61,207,160,0.3); color: var(--green);"><i class="ti ti-flower"></i></div><div class="hl-info"><div class="hl-name">Philosopher's Path, Kyoto</div><div class="hl-meta">Apr 2024 &middot; Japan Cherry Blossom</div></div><span class="hl-badge green">Top Pick</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:linear-gradient(135deg,rgba(216,90,48,0.15),rgba(216,90,48,0.25)); border: 1px solid rgba(216,90,48,0.3); color: var(--orange);"><i class="ti ti-sunset"></i></div><div class="hl-info"><div class="hl-name">Kuta Beach Sunrise</div><div class="hl-meta">Mar 2024 &middot; Bali Retreat</div></div><span class="hl-badge orange">Favourite</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:linear-gradient(135deg,rgba(100,150,255,0.15),rgba(100,150,255,0.25)); border: 1px solid rgba(100,150,255,0.3); color: var(--blue);"><i class="ti ti-mountain"></i></div><div class="hl-info"><div class="hl-name">Snaefellsjokull Glacier</div><div class="hl-meta">Jan 2024 &middot; Iceland Road Trip</div></div><span class="hl-badge green">Top Pick</span></div>
+          <div class="highlight-card" role="listitem" tabindex="0"><div class="hl-thumb" style="background:linear-gradient(135deg,rgba(200,80,255,0.15),rgba(200,80,255,0.25)); border: 1px solid rgba(200,80,255,0.3); color: #c850ff;"><i class="ti ti-glass-full"></i></div><div class="hl-info"><div class="hl-name">LX Factory, Lisbon</div><div class="hl-meta">Nov 2023 &middot; Lisbon &amp; Porto</div></div><span class="hl-badge green">Top Pick</span></div>
         </div>
       </aside>
 
@@ -640,6 +707,50 @@
           </div>
         </div>
       </div>
+    <!-- REGION EXPLORER PANEL -->
+      <aside class="panel" id="panel-region-explorer" role="dialog" aria-modal="true" aria-label="Region Explorer">
+        <div class="panel-header">
+          <span class="panel-title">🌍 Region Explorer</span>
+          <button class="panel-close" aria-label="Close panel"><i class="ti ti-x"></i></button>
+        </div>
+
+        <!-- Active spotlight indicator -->
+        <div class="re-spotlight-bar" id="re-spotlight-bar" style="display:none">
+          <i class="ti ti-spotlight"></i>
+          <div class="re-sb-text">
+            <strong id="re-spotlight-name">—</strong>
+            <span id="re-spotlight-sub">Spotlight active — rest of map is hidden</span>
+          </div>
+          <button class="re-sb-clear" id="re-clear-spotlight">Clear</button>
+        </div>
+
+        <!-- COUNTRY SECTION -->
+        <div class="re-section-label">
+          <span>Countries</span>
+          <span class="re-clear-btn" id="re-clear-country">Clear</span>
+        </div>
+        <div class="re-search-box">
+          <i class="ti ti-search"></i>
+          <input type="text" class="re-search-input" id="re-country-search" placeholder="Search countries…" autocomplete="off" />
+        </div>
+        <div class="re-list" id="re-country-list"></div>
+
+        <!-- STATE / PROVINCE SECTION -->
+        <div class="re-section-label">
+          <span>States &amp; Provinces</span>
+          <span class="re-clear-btn" id="re-clear-state">Clear</span>
+        </div>
+        <div class="re-search-box">
+          <i class="ti ti-search"></i>
+          <input type="text" class="re-search-input" id="re-state-search" placeholder="Search states…" autocomplete="off" />
+        </div>
+        <div class="re-list" id="re-state-list">
+          <div class="re-state-placeholder" id="re-state-placeholder">
+            <i class="ti ti-map-pin-off"></i>
+            <span>Select a country above to<br>browse its states &amp; provinces</span>
+          </div>
+        </div>
+      </aside>
     </main>
 
     <!-- MOBILE BOTTOM NAV -->
@@ -1329,6 +1440,308 @@
     btn.innerHTML = '<i class="ti ti-check"></i> Trip Created!';
     btn.style.background = 'linear-gradient(135deg,#1a7a56,#2ab88a)';
     setTimeout(() => { btn.innerHTML='<i class="ti ti-map-pin-plus"></i> Create Trip &amp; Drop Pin'; btn.style.background=''; closePanel(); }, 2000);
+  });
+
+  /* ======================================================
+     REGION EXPLORER — SPOTLIGHT SYSTEM
+  ====================================================== */
+  const COUNTRIES = [
+    {name:'Afghanistan',flag:'🇦🇫'},{name:'Albania',flag:'🇦🇱'},{name:'Algeria',flag:'🇩🇿'},
+    {name:'Argentina',flag:'🇦🇷'},{name:'Australia',flag:'🇦🇺'},{name:'Austria',flag:'🇦🇹'},
+    {name:'Azerbaijan',flag:'🇦🇿'},{name:'Bangladesh',flag:'🇧🇩'},{name:'Belgium',flag:'🇧🇪'},
+    {name:'Bolivia',flag:'🇧🇴'},{name:'Brazil',flag:'🇧🇷'},{name:'Bulgaria',flag:'🇧🇬'},
+    {name:'Canada',flag:'🇨🇦'},{name:'Chile',flag:'🇨🇱'},{name:'China',flag:'🇨🇳'},
+    {name:'Colombia',flag:'🇨🇴'},{name:'Croatia',flag:'🇭🇷'},{name:'Cuba',flag:'🇨🇺'},
+    {name:'Czech Republic',flag:'🇨🇿'},{name:'Denmark',flag:'🇩🇰'},{name:'Egypt',flag:'🇪🇬'},
+    {name:'Ethiopia',flag:'🇪🇹'},{name:'Finland',flag:'🇫🇮'},{name:'France',flag:'🇫🇷'},
+    {name:'Germany',flag:'🇩🇪'},{name:'Ghana',flag:'🇬🇭'},{name:'Greece',flag:'🇬🇷'},
+    {name:'Guatemala',flag:'🇬🇹'},{name:'Hungary',flag:'🇭🇺'},{name:'Iceland',flag:'🇮🇸'},
+    {name:'India',flag:'🇮🇳'},{name:'Indonesia',flag:'🇮🇩'},{name:'Iran',flag:'🇮🇷'},
+    {name:'Iraq',flag:'🇮🇶'},{name:'Ireland',flag:'🇮🇪'},{name:'Israel',flag:'🇮🇱'},
+    {name:'Italy',flag:'🇮🇹'},{name:'Japan',flag:'🇯🇵'},{name:'Jordan',flag:'🇯🇴'},
+    {name:'Kazakhstan',flag:'🇰🇿'},{name:'Kenya',flag:'🇰🇪'},{name:'Kuwait',flag:'🇰🇼'},
+    {name:'Malaysia',flag:'🇲🇾'},{name:'Mexico',flag:'🇲🇽'},{name:'Morocco',flag:'🇲🇦'},
+    {name:'Mozambique',flag:'🇲🇿'},{name:'Myanmar',flag:'🇲🇲'},{name:'Nepal',flag:'🇳🇵'},
+    {name:'Netherlands',flag:'🇳🇱'},{name:'New Zealand',flag:'🇳🇿'},{name:'Nigeria',flag:'🇳🇬'},
+    {name:'Norway',flag:'🇳🇴'},{name:'Pakistan',flag:'🇵🇰'},{name:'Peru',flag:'🇵🇪'},
+    {name:'Philippines',flag:'🇵🇭'},{name:'Poland',flag:'🇵🇱'},{name:'Portugal',flag:'🇵🇹'},
+    {name:'Romania',flag:'🇷🇴'},{name:'Russia',flag:'🇷🇺'},{name:'Saudi Arabia',flag:'🇸🇦'},
+    {name:'Serbia',flag:'🇷🇸'},{name:'Singapore',flag:'🇸🇬'},{name:'South Africa',flag:'🇿🇦'},
+    {name:'South Korea',flag:'🇰🇷'},{name:'Spain',flag:'🇪🇸'},{name:'Sri Lanka',flag:'🇱🇰'},
+    {name:'Sweden',flag:'🇸🇪'},{name:'Switzerland',flag:'🇨🇭'},{name:'Taiwan',flag:'🇹🇼'},
+    {name:'Tanzania',flag:'🇹🇿'},{name:'Thailand',flag:'🇹🇭'},{name:'Turkey',flag:'🇹🇷'},
+    {name:'Ukraine',flag:'🇺🇦'},{name:'United Arab Emirates',flag:'🇦🇪'},
+    {name:'United Kingdom',flag:'🇬🇧'},{name:'United States',flag:'🇺🇸'},
+    {name:'Uruguay',flag:'🇺🇾'},{name:'Uzbekistan',flag:'🇺🇿'},{name:'Venezuela',flag:'🇻🇪'},
+    {name:'Vietnam',flag:'🇻🇳'},{name:'Yemen',flag:'🇾🇪'},{name:'Zimbabwe',flag:'🇿🇼'},
+  ];
+
+  const STATES_BY_COUNTRY = {
+    'India':['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh'],
+    'United States':['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','Washington D.C.'],
+    'Australia':['New South Wales','Victoria','Queensland','Western Australia','South Australia','Tasmania','Northern Territory','Australian Capital Territory'],
+    'Canada':['Alberta','British Columbia','Manitoba','New Brunswick','Newfoundland and Labrador','Northwest Territories','Nova Scotia','Nunavut','Ontario','Prince Edward Island','Quebec','Saskatchewan','Yukon'],
+    'Germany':['Baden-Württemberg','Bavaria','Berlin','Brandenburg','Bremen','Hamburg','Hesse','Lower Saxony','Mecklenburg-Vorpommern','North Rhine-Westphalia','Rhineland-Palatinate','Saarland','Saxony','Saxony-Anhalt','Schleswig-Holstein','Thuringia'],
+    'Brazil':['Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Espírito Santo','Goiás','Maranhão','Mato Grosso','Mato Grosso do Sul','Minas Gerais','Pará','Paraíba','Paraná','Pernambuco','Piauí','Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina','São Paulo','Sergipe','Tocantins'],
+    'China':['Anhui','Beijing','Chongqing','Fujian','Gansu','Guangdong','Guangxi','Guizhou','Hainan','Hebei','Heilongjiang','Henan','Hubei','Hunan','Inner Mongolia','Jiangsu','Jiangxi','Jilin','Liaoning','Ningxia','Qinghai','Shaanxi','Shandong','Shanghai','Shanxi','Sichuan','Tianjin','Tibet','Xinjiang','Yunnan','Zhejiang'],
+    'Russia':['Altai Republic','Bashkortostan','Buryatia','Chechnya','Dagestan','Ingushetia','Kabardino-Balkaria','Kalmykia','Karachay-Cherkessia','Karelia','Khakassia','Komi','Mari El','Mordovia','North Ossetia','Sakha','Tatarstan','Tuva','Udmurtia','Adygea','Crimea','Moscow','Saint Petersburg'],
+    'Japan':['Aichi','Akita','Aomori','Chiba','Ehime','Fukui','Fukuoka','Fukushima','Gifu','Gunma','Hiroshima','Hokkaido','Hyogo','Ibaraki','Ishikawa','Iwate','Kagawa','Kagoshima','Kanagawa','Kochi','Kumamoto','Kyoto','Mie','Miyagi','Miyazaki','Nagano','Nagasaki','Nara','Niigata','Oita','Okayama','Okinawa','Osaka','Saga','Saitama','Shiga','Shimane','Shizuoka','Tochigi','Tokushima','Tokyo','Tottori','Toyama','Wakayama','Yamagata','Yamaguchi','Yamanashi'],
+    'United Kingdom':['England','Scotland','Wales','Northern Ireland'],
+    'France':['Auvergne-Rhône-Alpes','Bourgogne-Franche-Comté','Brittany','Centre-Val de Loire','Corsica','Grand Est','Hauts-de-France','Île-de-France','Normandy','Nouvelle-Aquitaine','Occitanie','Pays de la Loire',"Provence-Alpes-Côte d'Azur"],
+    'Italy':['Abruzzo','Aosta Valley','Apulia','Basilicata','Calabria','Campania','Emilia-Romagna','Friuli Venezia Giulia','Lazio','Liguria','Lombardy','Marche','Molise','Piedmont','Sardinia','Sicily','Trentino-Alto Adige','Tuscany','Umbria','Veneto'],
+    'Spain':['Andalusia','Aragon','Asturias','Balearic Islands','Basque Country','Canary Islands','Cantabria','Castile-La Mancha','Castile and León','Catalonia','Extremadura','Galicia','La Rioja','Madrid','Murcia','Navarre','Valencia'],
+    'Mexico':['Aguascalientes','Baja California','Baja California Sur','Campeche','Chiapas','Chihuahua','Coahuila','Colima','Durango','Guanajuato','Guerrero','Hidalgo','Jalisco','Mexico City','Mexico State','Michoacán','Morelos','Nayarit','Nuevo León','Oaxaca','Puebla','Querétaro','Quintana Roo','San Luis Potosí','Sinaloa','Sonora','Tabasco','Tamaulipas','Tlaxcala','Veracruz','Yucatán','Zacatecas'],
+    'South Africa':['Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','North West','Northern Cape','Western Cape'],
+    'Nigeria':['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'],
+    'Pakistan':['Balochistan','Gilgit-Baltistan','Islamabad Capital Territory','Khyber Pakhtunkhwa','Punjab','Sindh','Azad Kashmir'],
+    'Turkey':['Adana','Ankara','Antalya','Bursa','Diyarbakır','Erzurum','Eskişehir','Gaziantep','İstanbul','İzmir','Kayseri','Konya','Malatya','Mersin','Samsun','Trabzon'],
+    'Indonesia':['Aceh','Bali','Bangka Belitung','Banten','Bengkulu','Central Java','Central Kalimantan','Central Sulawesi','East Java','East Kalimantan','East Nusa Tenggara','Gorontalo','Jakarta','Jambi','Lampung','Maluku','North Kalimantan','North Maluku','North Sulawesi','North Sumatra','Papua','Riau','Riau Islands','South Kalimantan','South Sulawesi','South Sumatra','Southeast Sulawesi','West Java','West Kalimantan','West Nusa Tenggara','West Papua','West Sulawesi','West Sumatra','Yogyakarta'],
+    'Thailand':['Bangkok','Chiang Mai','Chiang Rai','Chonburi','Nakhon Ratchasima','Phuket','Songkhla','Udon Thani'],
+    'Vietnam':['An Giang','Bà Rịa–Vũng Tàu','Bình Dương','Đà Nẵng','Hà Nội','Hải Phòng','Ho Chi Minh City','Khánh Hòa','Lâm Đồng','Nghệ An','Quảng Ninh'],
+    'Argentina':['Buenos Aires','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'],
+    'Saudi Arabia':['Asir','Eastern Province','Hail','Jizan','Mecca','Medina','Najran','Northern Borders','Qassim','Riyadh','Tabuk'],
+    'United Arab Emirates':['Abu Dhabi','Ajman','Dubai','Fujairah','Ras Al Khaimah','Sharjah','Umm Al Quwain'],
+    'Philippines':['Metro Manila','Cebu','Davao','Iloilo','Batangas','Laguna','Pampanga','Bulacan'],
+    'South Korea':['Busan','Daegu','Daejeon','Gangwon','Gyeonggi','Incheon','Jeju','Jeonnam','Jeonbuk','North Gyeongsang','South Gyeongsang','Seoul','Ulsan'],
+    'Portugal':['Alentejo','Algarve','Azores','Beja','Braga','Bragança','Castelo Branco','Coimbra','Évora','Faro','Guarda','Leiria','Lisbon','Madeira','Portalegre','Porto','Santarém','Setúbal','Viana do Castelo','Vila Real','Viseu'],
+    'Greece':['Attica','Central Greece','Central Macedonia','Crete','Eastern Macedonia','Epirus','Ionian Islands','North Aegean','Peloponnese','South Aegean','Thessaly','Western Greece','Western Macedonia'],
+    'Netherlands':['Drenthe','Flevoland','Friesland','Gelderland','Groningen','Limburg','North Brabant','North Holland','Overijssel','South Holland','Utrecht','Zeeland'],
+    'Sweden':['Blekinge','Dalarna','Gävleborg','Gotland','Halland','Jämtland','Jönköping','Kalmar','Kronoberg','Norrbotten','Örebro','Östergötland','Skåne','Södermanland','Stockholm','Uppsala','Värmland','Västerbotten','Västernorrland','Västmanland','Västra Götaland'],
+    'Norway':['Agder','Innlandet','Møre og Romsdal','Nordland','Oslo','Rogaland','Troms og Finnmark','Trøndelag','Vestfold og Telemark','Vestland','Viken'],
+    'Switzerland':['Aargau','Appenzell Ausserrhoden','Appenzell Innerrhoden','Basel-Landschaft','Basel-Stadt','Bern','Fribourg','Geneva','Glarus','Graubünden','Jura','Lucerne','Neuchâtel','Nidwalden','Obwalden','Schaffhausen','Schwyz','Solothurn','St. Gallen','Thurgau','Ticino','Uri','Valais','Vaud','Zug','Zurich'],
+  };
+
+  // State: what is currently spotlighted?
+  let spotlightCountry = null;  // { name, flag }
+  let spotlightState   = null;  // { name } or null
+  let spotlightPlaceId = null;  // Google placeId if resolved
+  let geocoder = null; // Initialized lazily after Maps API loads
+  function getGeocoder() {
+    if (!geocoder) geocoder = new google.maps.Geocoder();
+    return geocoder;
+  }
+
+  // Render countries list
+  function renderCountries(filter = '') {
+    const listEl = document.getElementById('re-country-list');
+    const lower = filter.toLowerCase();
+    const filtered = COUNTRIES.filter(c => c.name.toLowerCase().includes(lower));
+    listEl.innerHTML = filtered.map(c => `
+      <div class="re-item ${spotlightCountry?.name === c.name ? 'selected' : ''}"
+           data-country="${c.name}" tabindex="0">
+        <span class="re-flag">${c.flag}</span>
+        <span class="re-name">${c.name}</span>
+        <i class="ti ti-check re-check"></i>
+      </div>`).join('');
+    listEl.querySelectorAll('.re-item').forEach(el => {
+      el.addEventListener('click', () => selectCountry(el.dataset.country));
+      el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); selectCountry(el.dataset.country); }});
+    });
+  }
+
+  // Render states list
+  function renderStates(countryName, filter = '') {
+    const listEl = document.getElementById('re-state-list');
+    const placeholder = document.getElementById('re-state-placeholder');
+    const states = STATES_BY_COUNTRY[countryName];
+    if (!states) {
+      listEl.innerHTML = '<div class="re-state-placeholder"><i class="ti ti-info-circle"></i><span>State data not available for this country</span></div>';
+      return;
+    }
+    if (placeholder) placeholder.remove();
+    const lower = filter.toLowerCase();
+    const filtered = states.filter(s => s.toLowerCase().includes(lower));
+    listEl.innerHTML = filtered.map(s => `
+      <div class="re-item ${spotlightState?.name === s ? 'selected' : ''}"
+           data-state="${s}" tabindex="0">
+        <i class="ti ti-map-pin re-flag" style="font-size:14px;color:var(--text-mute)"></i>
+        <span class="re-name">${s}</span>
+        <i class="ti ti-check re-check"></i>
+      </div>`).join('');
+    listEl.querySelectorAll('.re-item').forEach(el => {
+      el.addEventListener('click', () => selectState(el.dataset.state));
+      el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); selectState(el.dataset.state); }});
+    });
+  }
+
+  /* -------------------------------------------------------
+     SPOTLIGHT IMPLEMENTATION
+     Uses Places Service (already loaded) for geocoding,
+     and a DIV overlay mask for the visual effect.
+     No Geocoding API or FeatureLayer required.
+  ------------------------------------------------------- */
+
+  // Create a full-cover dark overlay div inside map-main
+  const spotlightOverlay = document.createElement('div');
+  spotlightOverlay.id = 're-map-overlay';
+  spotlightOverlay.style.cssText = [
+    'position:absolute', 'inset:0', 'z-index:5', 'pointer-events:none',
+    'background:rgba(2,4,8,0.94)', 'opacity:0',
+    'transition:opacity .5s cubic-bezier(.4,0,.2,1)',
+    'border-radius:inherit',
+  ].join(';');
+  document.getElementById('globe-shell').appendChild(spotlightOverlay);
+
+  // Punch-hole SVG that cuts out the selected region shape
+  // For now we use a simple vignette overlay with the selected region
+  // highlighted using map's own fitBounds + overlay fade
+  let placesService = null;
+  function getPlacesService() {
+    if (!placesService) {
+      placesService = new google.maps.places.PlacesService(map);
+    }
+    return placesService;
+  }
+
+  function applySpotlight(query, type) {
+    stopPan();
+    // Show dark overlay immediately
+    spotlightOverlay.style.opacity = '1';
+
+    // Use PlacesService.textSearch to find region bounds (no Geocoding API needed)
+    const request = {
+      query: query + (type === 'state' ? '' : ''),
+      fields: ['geometry', 'name'],
+    };
+    getPlacesService().textSearch(request, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results[0]?.geometry) {
+        const geo = results[0].geometry;
+        if (geo.viewport) {
+          map.fitBounds(geo.viewport);
+        } else {
+          map.setCenter(geo.location);
+          map.setZoom(type === 'country' ? 5 : 7);
+        }
+        // Now reveal a spotlight window by cutting a hole in the overlay
+        // We use a CSS mask to punch a transparent hole in the center
+        // proportional to the region's viewport on screen
+        google.maps.event.addListenerOnce(map, 'idle', () => {
+          punchSpotlightHole();
+        });
+      } else {
+        // Fallback: just show overlay with no zoom
+        console.warn('[RE] PlacesService failed for:', query, status);
+      }
+    });
+
+    // Also try FeatureLayer approach if available
+    if (HAS_MAP_ID && Object.keys(featureLayers).length > 0) {
+      const layerKey = type === 'country' ? 'countries' : 'states';
+      const lyr = featureLayers[layerKey];
+      const gc = getGeocoder();
+      if (lyr && gc) {
+        gc.geocode({ address: query }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const pid = results[0].place_id;
+            applyFeatureLayerSpotlight(lyr, pid, LAYER_CFG[layerKey], type);
+          }
+        });
+      }
+    }
+  }
+
+  function punchSpotlightHole() {
+    // Use a radial gradient mask: transparent in center (shows map), dark at edges
+    // The "hole" starts small and covers most of the globe except the focused region
+    spotlightOverlay.style.background = 'transparent';
+    spotlightOverlay.style.background = [
+      'radial-gradient(ellipse 60% 55% at 50% 48%,',
+        'transparent 0%,',
+        'transparent 35%,',
+        'rgba(2,4,8,0.3) 55%,',
+        'rgba(2,4,8,0.97) 75%',
+      ')',
+    ].join('');
+    spotlightOverlay.style.opacity = '1';
+  }
+  function applyFeatureLayerSpotlight(lyr, placeId, cfg, type) {
+    try {
+      lyr.style = opts => {
+        if (opts.feature.placeId === placeId) {
+          return { fillColor:'transparent', fillOpacity:0, strokeColor:'#b88aff', strokeWeight:2.5, strokeOpacity:1 };
+        }
+        return { fillColor:'#030508', fillOpacity:0.97, strokeWeight:0, strokeOpacity:0 };
+      };
+      const otherKeys = Object.keys(featureLayers).filter(k => k !== (type === 'country' ? 'countries' : 'states'));
+      otherKeys.forEach(k => { const l=featureLayers[k]; if(l) l.style=()=>({fillColor:'#030508',fillOpacity:0.97,strokeWeight:0}); });
+    } catch(e) { console.warn('[RE] FeatureLayer styling failed:', e.message); }
+  }
+
+  function zoomToResult(result) {
+    stopPan();
+    if (result.geometry.viewport) map.fitBounds(result.geometry.viewport);
+    else { map.setCenter(result.geometry.location); map.setZoom(5); }
+  }
+
+  function selectCountry(name) {
+    const country = COUNTRIES.find(c => c.name === name);
+    if (!country) return;
+    // Toggle off if already selected
+    if (spotlightCountry?.name === name && !spotlightState) { clearSpotlight(); return; }
+    spotlightCountry = country;
+    spotlightState = null;
+    renderCountries(document.getElementById('re-country-search').value);
+    renderStates(name, document.getElementById('re-state-search').value);
+    // Update spotlight bar
+    const bar = document.getElementById('re-spotlight-bar');
+    bar.style.display = 'flex';
+    document.getElementById('re-spotlight-name').textContent = country.flag + '  ' + country.name;
+    document.getElementById('re-spotlight-sub').textContent = 'Spotlight active — all other regions hidden';
+    applySpotlight(name, 'country');
+    stopPan();
+  }
+
+  function selectState(name) {
+    if (!spotlightCountry) return;
+    // Toggle off if already selected
+    if (spotlightState?.name === name) {
+      spotlightState = null;
+      renderStates(spotlightCountry.name, document.getElementById('re-state-search').value);
+      // Revert to country spotlight
+      selectCountry(spotlightCountry.name);
+      return;
+    }
+    spotlightState = { name };
+    renderStates(spotlightCountry.name, document.getElementById('re-state-search').value);
+    // Update spotlight bar
+    const bar = document.getElementById('re-spotlight-bar');
+    bar.style.display = 'flex';
+    document.getElementById('re-spotlight-name').textContent = name + ', ' + spotlightCountry.name;
+    document.getElementById('re-spotlight-sub').textContent = 'State spotlight — all other regions hidden';
+    applySpotlight(name + ', ' + spotlightCountry.name, 'state');
+    stopPan();
+  }
+
+  // Wire up search inputs
+  document.getElementById('re-country-search').addEventListener('input', e => {
+    renderCountries(e.target.value);
+  });
+  document.getElementById('re-state-search').addEventListener('input', e => {
+    if (spotlightCountry) renderStates(spotlightCountry.name, e.target.value);
+  });
+
+  // Wire up clear buttons
+  document.getElementById('re-clear-spotlight').addEventListener('click', clearSpotlight);
+  document.getElementById('re-clear-country').addEventListener('click', () => {
+    document.getElementById('re-country-search').value = '';
+    clearSpotlight();
+  });
+  document.getElementById('re-clear-state').addEventListener('click', () => {
+    document.getElementById('re-state-search').value = '';
+    if (spotlightCountry) {
+      spotlightState = null;
+      renderStates(spotlightCountry.name, '');
+      selectCountry(spotlightCountry.name);
+    }
+  });
+
+  // Initialise panel when first opened (hooked into the real openPanel)
+  // Note: openPanel function already handles 'region-explorer' via the
+  // data-panel click delegation. We just initialise the list on first open.
+  document.getElementById('btn-region-explorer').addEventListener('click', () => {
+    if (document.getElementById('re-country-list').children.length === 0) {
+      renderCountries('');
+    }
   });
   </script>
 
